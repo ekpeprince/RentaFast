@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "lekki-apartment",
+      "description": "A modern 2-bedroom apartment in Lekki Phase 1.",
+      "imageUrl": "https://images.unsplash.com/photo-1664892798972-079f15663b16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtb2Rlcm4lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzY1NDY4NTk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern apartment"
+    },
+    {
+      "id": "ikeja-duplex",
+      "description": "A spacious 4-bedroom duplex in Ikeja GRA.",
+      "imageUrl": "https://images.unsplash.com/photo-1647336811715-d7c7837c50d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxsdXh1cnklMjBkdXBsZXh8ZW58MHx8fHwxNzY1NDg0MTk0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "luxury duplex"
+    },
+    {
+      "id": "maitama-flat",
+      "description": "A luxury 3-bedroom flat in Maitama, Abuja.",
+      "imageUrl": "https://images.unsplash.com/photo-1760259904989-3c9b99ad49d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhYnVqYSUyMGZsYXR8ZW58MHx8fHwxNzY1NDg0MTk0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abuja flat"
+    },
+    {
+      "id": "yaba-shortlet",
+      "description": "A cozy 1-bedroom short-let apartment in Yaba.",
+      "imageUrl": "https://images.unsplash.com/photo-1542855596-45eb2695c74c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb3p5JTIwYXBhcnRtZW50fGVufDB8fHx8MTc2NTQ2MDg0NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cozy apartment"
+    },
+    {
+      "id": "victoria-island-penthouse",
+      "description": "An executive 5-bedroom penthouse with ocean views.",
+      "imageUrl": "https://images.unsplash.com/photo-1610394001485-a3eceff6a4d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZW50aG91c2UlMjBvY2VhbnxlbnwwfHx8fDE3NjU0ODQxOTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "penthouse ocean"
+    },
+    {
+      "id": "lekki-studio",
+      "description": "A compact studio apartment in a serviced estate in Lekki.",
+      "imageUrl": "https://images.unsplash.com/photo-1633505765486-e404bbbec654?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdHVkaW8lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzY1NDg0MTk1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "studio apartment"
+    }
+  ]
 }
