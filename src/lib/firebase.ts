@@ -4,15 +4,13 @@ import { initializeApp } from 'firebase/app';
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY_HERE",
-  authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
-  projectId: "PASTE_YOUR_PROJECT_ID_HERE",
-  storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_YOUR_APP_ID_HERE",
-  measurementId: "PASTE_YOUR_MEASUREMENT_ID_HERE"
+  apiKey: "PASTE_API_KEY_HERE",
+  authDomain: "rentfast-v2.firebaseapp.com",
+  projectId: "rentfast-v2",
+  storageBucket: "rentfast-v2.appspot.com",
+  messagingSenderId: "685830534650",
+  appId: "1:685830534650:web:f409ed48c9638c2972e043",
 };
 
 // Initialize Firebase
