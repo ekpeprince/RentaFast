@@ -1,128 +1,28 @@
-/**
- * Core Philosophy: This ruleset implements a role-based and ownership-based security model for a rental property application.
- * There are two main roles: 'landlord' and 'tenant'. Property listings are public to all users for browsing, but write
- * operations are strictly controlled. Only authenticated users with the 'landlord' role can create new property listings.
- * Once created, a property can only be modified or deleted by its original creator (the owner). User profile data is private
- * and can only be accessed or modified by the user themselves.
- *
- * Data Structure: The data is organized into two distinct top-level collections:
- * - /users/{userId}: Stores private user profile information, including the critical 'role' field.
- * - /properties/{propertyId}: Stores public property listings.
- *
- * Key Security Decisions:
- * - User Privacy: Listing users is explicitly disallowed to prevent user enumeration and protect privacy. Users can only
- *   read and write their own document in the /users collection.
- * - Role-Based Creation: The ability to create a property is restricted to users whose document in /users has role == 'landlord'.
- *   This is enforced using a `get()` call to the user's own profile during the creation request.
- * - Strict Ownership: All write operations (update, delete) on a property are restricted to the user whose UID matches the
- *   `landlordId` field stored on the property document.
- * - Public Readability: All property listings are publicly readable to facilitate browsing by any user, signed-in or not.
- *
- * Denormalization for Authorization: The `/properties/{propertyId}` documents contain a denormalized `landlordId` field. This
- * is a critical design choice that allows security rules to check for ownership directly on the document being modified,
- * avoiding slow, costly, and complex cross-collection `get()` calls for update and delete operations.
- *
- * Structural Segregation: User data (/users) and application content (/properties) are stored in separate top-level collections.
- * This clear separation simplifies rule logic and improves query performance and security.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to improve readability and code reuse.
-    
-    /**
-     * Checks if the current request is from an authenticated user.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    /**
-     * Checks if the authenticated user's UID matches the provided userId.
-     * This is the fundamental check for document ownership.
-     */
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    /**
-     * Checks if a document exists and if the requester is the owner.
-     * Used for safe update and delete operations.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * Checks if the requesting user has the 'landlord' role by reading their user profile.
-     * This requires one document read and is used to authorize property creation.
-     */
+    
     function isLandlord() {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'landlord';
     }
 
-    /**
-     * Validates required fields for user document creation, ensuring the document's
-     * internal ID matches the path and the role is valid.
-     */
-    function hasValidUserDataOnCreate(userId) {
-      let data = request.resource.data;
-      return data.id == userId
-             && data.role in ['landlord', 'tenant'];
-    }
-
-    /**
-     * Enforces immutability for critical user fields after creation.
-     * A user's ID and role cannot be changed via an update.
-     */
-    function hasImmutableUserData() {
-      return request.resource.data.id == resource.data.id
-             && request.resource.data.role == resource.data.role;
-    }
-    
-    /**
-     * Validates that the landlordId on a new property matches the creator's UID.
-     */
-    function isPropertyCreator() {
-      return request.resource.data.landlordId == request.auth.uid;
-    }
-    
-    /**
-     * Enforces immutability of the landlordId on a property update.
-     */
-    function isPropertyOwnerUnchanged() {
-      return request.resource.data.landlordId == resource.data.landlordId;
-    }
-
-    /**
-     * @description Rules for user profile documents. Each user has a document where the ID is their auth UID.
-     * @path /users/{userId}
-     * @allow (create) A new user signing up for the first time: `create /users/user_abc` with `{id: 'user_abc', role: 'tenant'}` if auth.uid is 'user_abc'.
-     * @deny (get) Another user trying to read a profile: `get /users/user_xyz` when auth.uid is 'user_abc'.
-     * @principle Restricts access to a user's own data tree, ensuring user privacy and self-management.
-     */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
-      allow update: if isExistingOwner(userId) && hasImmutableUserData();
-      allow delete: if isExistingOwner(userId);
+      allow read, update, delete: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId && request.resource.data.role in ['tenant', 'landlord'];
     }
 
-    /**
-     * @description Rules for property listings. Properties are public to read but writes are restricted.
-     * @path /properties/{propertyId}
-     * @allow (create) A signed-in user with the 'landlord' role adding a new property they own.
-     * @deny (create) A signed-in user with the 'tenant' role trying to add a property.
-     * @principle Enforces public read access for browsing, with role-based creation and strict ownership for all writes.
-     */
     match /properties/{propertyId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isLandlord() && isPropertyCreator();
-      allow update: if isExistingOwner(resource.data.landlordId) && isPropertyOwnerUnchanged();
-      allow delete: if isExistingOwner(resource.data.landlordId);
+      allow read, list: if true;
+      allow create: if isLandlord() && request.resource.data.landlordId == request.auth.uid;
+      allow update, delete: if isLandlord() && resource.data.landlordId == request.auth.uid;
     }
   }
 }
