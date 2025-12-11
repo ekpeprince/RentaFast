@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the RentaFast application, storing their role and potentially other profile information.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user, matching their Firebase Auth UID."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the application (either 'landlord' or 'tenant').",
+          "format": "string"
+        }
+      },
+      "required": [
+        "id",
+        "role"
+      ]
+    },
+    "Property": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Property",
+      "type": "object",
+      "description": "Represents a property listing in the RentaFast application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the property listing."
+        },
+        "landlordId": {
+          "type": "string",
+          "description": "Reference to the User who owns this property. (Relationship: User 1:N Property)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the property listing."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the property."
+        },
+        "price": {
+          "type": "number",
+          "description": "The rental price of the property."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the property."
+        },
+        "amenities": {
+          "type": "array",
+          "description": "A list of amenities offered by the property.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "Array of URLs pointing to images of the property",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "landlordId",
+        "title",
+        "location",
+        "price",
+        "description",
+        "amenities",
+        "imageUrls"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles, including their role (landlord or tenant). The document ID is the Firebase Auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/properties/{propertyId}",
+        "definition": {
+          "entityName": "Property",
+          "schema": {
+            "$ref": "#/backend/entities/Property"
+          },
+          "description": "Stores property listings. Includes denormalized 'landlordId' for authorization independence.",
+          "params": [
+            {
+              "name": "propertyId",
+              "description": "The unique identifier for the property listing."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the 'RentaFast' application, focusing on scalability, security, and ease of management for user roles (Landlord/Tenant) and property listings. The structure emphasizes authorization independence to avoid complex and brittle security rules. This is achieved through denormalization, specifically for properties, to include the landlord's ID directly within each property document, avoiding the need for security rules to perform expensive `get()` operations to determine ownership. Segregation is used to isolate user profiles from property listings, and path-based ownership for properties ensures clear ownership and simplified security rules.\n\nThe key collections are `/users` and `/properties`. The `/users` collection stores user roles which is critical for role-based access control. The `/properties` collection stores property details and includes the `landlordId` to establish ownership and enforce security rules.\n\nThis structure enables secure list operations (QAPs) because listing properties does not require complex filtering based on user roles or permissions. Tenants can list properties as the security rules only check if they are reading properties, while landlords can only create, update, or delete properties they own due to `landlordId`."
+  }
+}
