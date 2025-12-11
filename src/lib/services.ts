@@ -1,8 +1,9 @@
+
 import { collection, getDocs, getDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import type { Property } from './types';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 /**
@@ -18,7 +19,6 @@ export async function fetchListings(): Promise<Property[]> {
       return {
         id: doc.id,
         ...data,
-        // Ensure all fields of Property type are present
         title: data.title || '',
         location: data.location || '',
         price: data.price || 0,
@@ -36,13 +36,13 @@ export async function fetchListings(): Promise<Property[]> {
     return listings;
   } catch (serverError: any) {
     if (serverError.code === 'permission-denied') {
-      const permissionError = new FirestorePermissionError({
-        path: propertiesCol.path,
-        operation: 'list',
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
+      // For server-side rendering, we cannot use the client-side error emitter.
+      // Instead, we throw a standard error that Next.js will catch.
+      // This will be displayed on the server logs and in the browser console during development.
+      throw new Error(`Firestore Permission Denied: You do not have permission to list properties at '${propertiesCol.path}'.`);
     }
-    // Return empty array or re-throw a different error for other issues
+    // For other errors, we can log them and return an empty array or re-throw.
+    console.error('Error fetching listings:', serverError);
     return [];
   }
 }
@@ -78,18 +78,17 @@ export async function fetchListingById(id: string): Promise<Property | undefined
     }
   } catch (serverError: any) {
     if (serverError.code === 'permission-denied') {
-      const permissionError = new FirestorePermissionError({
-        path: docRef.path,
-        operation: 'get',
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
+       // For server-side rendering, throw a standard error.
+       throw new Error(`Firestore Permission Denied: You do not have permission to get the document at '${docRef.path}'.`);
     }
+    console.error(`Error fetching listing ${id}:`, serverError);
     return undefined;
   }
 }
 
 /**
  * Creates a new property listing in Firestore.
+ * This function should be called from a client component.
  * @param values The property data.
  * @param user The authenticated user creating the listing.
  */
@@ -104,6 +103,6 @@ export function createListing(
     createdAt: serverTimestamp(),
   };
 
-  // Use the non-blocking function for optimistic UI updates and proper error handling
+  // Use the non-blocking function for optimistic UI updates and proper error handling on the client.
   addDocumentNonBlocking(propertiesCol, newListingData);
 }
