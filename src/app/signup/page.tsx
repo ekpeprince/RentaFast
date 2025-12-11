@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,11 +41,15 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Save user role in Firestore
-      await setDoc(doc(firestore, 'users', user.uid), {
+      // Save user role in Firestore using the non-blocking function
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userData = {
         id: user.uid,
         role: role,
-      });
+      };
+      // This function handles its own errors via the global error emitter
+      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+
 
       router.push('/');
     } catch (error: any) {
