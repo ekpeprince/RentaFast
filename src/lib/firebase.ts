@@ -5,12 +5,12 @@ import { initializeApp } from 'firebase/app';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAol1fmKfMZ9M0AyYw9LBfJNkPcTOWKY5Q",
-  authDomain: "rentfast-v2.firebaseapp.com",
-  projectId: "rentfast-v2",
-  storageBucket: "rentfast-v2.firebasestorage.app",
-  messagingSenderId: "685830534650",
-  appId: "1:685830534650:web:f409ed48c9638c2972e043"
+  apiKey: "AIzaSyAraBOYw5Qwv1cq-hPj8iXfjEnkcUyMUMs",
+  authDomain: "studio-4318385703-9c3f4.firebaseapp.com",
+  projectId: "studio-4318385703-9c3f4",
+  storageBucket: "rentfast-v2.appspot.com",
+  messagingSenderId: "820367460272",
+  appId: "1:820367460272:web:a711fa8225ce560399f875"
 };
 
 // Initialize Firebase
