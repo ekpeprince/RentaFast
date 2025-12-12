@@ -7,10 +7,12 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // 2. Properties (This fixes the error)
+    // 2. Properties
     match /properties/{propertyId} {
-      allow read: if true; 
+      // Allow anyone to read and list properties
+      allow get, list: if true; 
 
+      // Allow only authenticated landlords to write (create, update, delete)
       allow write: if request.auth != null 
                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'landlord';
     }
