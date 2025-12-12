@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -61,13 +62,9 @@ export default function NewListingPage() {
     setIsLoading(true);
 
     try {
-      // The createListing function now handles the Firestore interaction
-      // and non-blocking error handling. We don't need a try/catch here
-      // for permission errors.
       const listingData: Omit<Property, 'id' | 'landlordId' | 'createdAt'> = {
         ...values,
         period: 'yr',
-        serviced: false,
         amenities: [],
         imageId: 'lekki-apartment', // Default or placeholder image
       };
@@ -78,10 +75,8 @@ export default function NewListingPage() {
         description: 'Your property has been listed.',
       });
 
-      // Optimistically navigate. The write happens in the background.
       router.push('/');
     } catch (error: any) {
-      // This catch is for other potential errors, not permission denied.
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',

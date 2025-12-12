@@ -1,19 +1,33 @@
+
+'use client';
+
 import Link from 'next/link';
 import { Suspense } from 'react';
 import HomeHeader from '@/components/home-header';
 import PropertySearch from '@/components/property-search';
 import CategoryFilters from '@/components/category-filters';
 import PropertyCard from '@/components/property-card';
-import { fetchListings } from '@/lib/services';
-import type { Property } from '@/lib/mock-data';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { collection, query, orderBy } from 'firebase/firestore';
 
-async function ListingsGrid() {
-  const listings = await fetchListings();
+function ListingsGrid() {
+  const firestore = useFirestore();
+
+  const listingsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'properties'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: listings, isLoading } = useCollection<Property>(listingsQuery);
+
+  if (isLoading) {
+    return <ListingsSkeleton />;
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {listings.map((listing) => (
+      {listings?.map((listing) => (
         <Link key={listing.id} href={`/property/${listing.id}`}>
           <PropertyCard listing={listing} />
         </Link>

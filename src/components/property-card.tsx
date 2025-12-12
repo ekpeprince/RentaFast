@@ -1,8 +1,9 @@
+
 import Image from 'next/image';
 import { Heart, BedDouble, Bath } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Property } from '@/lib/mock-data';
+import type { Property } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -17,7 +18,7 @@ export default function PropertyCard({ listing }: PropertyCardProps) {
   return (
     <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl">
       <div className="relative">
-        <div className="aspect-w-4 aspect-h-3 w-full">
+        <div className="aspect-w-4 aspect-h-3 w-full h-48">
           {image && (
             <Image
               src={image.imageUrl}
@@ -52,9 +53,6 @@ export default function PropertyCard({ listing }: PropertyCardProps) {
             <Bath className="h-4 w-4" />
             <span>{listing.baths} Baths</span>
           </div>
-          {listing.serviced && (
-            <Badge variant="secondary" className="font-normal">Serviced</Badge>
-          )}
         </div>
       </CardContent>
     </Card>

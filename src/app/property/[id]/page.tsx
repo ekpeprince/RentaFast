@@ -1,16 +1,62 @@
+
+'use client';
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { Wifi, Zap, ShieldCheck } from 'lucide-react';
-import { fetchListingById } from '@/lib/services';
+import { Wifi, Zap, ShieldCheck, BedDouble, Bath, Building } from 'lucide-react';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AmenityIcon from '@/components/amenity-icon';
-import type { Amenity } from '@/lib/mock-data';
+import type { Property } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function PropertyPage({ params }: { params: { id: string } }) {
-  const property = await fetchListingById(params.id);
+function PropertyDetailsSkeleton() {
+  return (
+    <div className="relative min-h-screen pb-28">
+       <Skeleton className="h-72 w-full sm:h-96" />
+        <div className="container mx-auto -mt-16 px-4 sm:px-6 lg:px-8">
+          <div className="relative space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <Skeleton className="h-8 w-80 mb-2" />
+                    <Skeleton className="h-5 w-48" />
+                  </div>
+                  <Skeleton className="h-8 w-32 mt-2 sm:mt-0" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-6 w-40 mb-2" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+    </div>
+  )
+}
+
+
+export default function PropertyPage({ params }: { params: { id: string } }) {
+  const firestore = useFirestore();
+  const propertyRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'properties', params.id) : null),
+    [firestore, params.id]
+  );
+  const { data: property, isLoading } = useDoc<Property>(propertyRef);
+
+  if (isLoading) {
+    return <PropertyDetailsSkeleton />;
+  }
 
   if (!property) {
     notFound();
@@ -48,22 +94,35 @@ export default async function PropertyPage({ params }: { params: { id: string } 
                 </p>
               </div>
             </CardHeader>
-            <CardContent>
-              <h3 className="text-lg font-semibold text-primary mb-2">Description</h3>
-              <p className="text-muted-foreground">{property.description}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-primary">Amenities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {property.amenities.map((amenity) => (
-                  <AmenityIcon key={amenity} amenity={amenity} />
-                ))}
+            <CardContent className="space-y-6">
+               <div className="flex items-center gap-6 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Building className="h-5 w-5 text-primary" />
+                  <span>{property.type}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BedDouble className="h-5 w-5 text-primary" />
+                  <span>{property.beds} Beds</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Bath className="h-5 w-5 text-primary" />
+                  <span>{property.baths} Baths</span>
+                </div>
               </div>
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-2">Description</h3>
+                <p className="text-muted-foreground">{property.description}</p>
+              </div>
+               {property.amenities && property.amenities.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-primary mb-2">Amenities</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {property.amenities.map((amenity) => (
+                      <AmenityIcon key={amenity} amenity={amenity} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
