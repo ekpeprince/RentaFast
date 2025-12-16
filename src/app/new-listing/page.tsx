@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -28,7 +27,7 @@ const listingSchema = z.object({
   type: z.enum(['Flat', 'Duplex', 'Short-let', 'Self-con', 'Penthouse']),
   beds: z.coerce.number().int().min(1, 'Must have at least one bed'),
   baths: z.coerce.number().int().min(1, 'Must have at least one bath'),
-  images: z.instanceof(FileList).refine((files) => files.length > 0, 'At least one image is required.'),
+  images: z.custom<FileList>().refine((files) => files.length > 0, 'At least one image is required.'),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
@@ -53,15 +52,6 @@ export default function NewListingPage() {
       baths: 1,
     },
   });
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
-      setImagePreviews(newPreviews);
-      form.setValue('images', files);
-    }
-  };
 
   const onSubmit = async (values: ListingFormValues) => {
     if (!user || !firestore || !firebaseApp) {
@@ -98,8 +88,8 @@ export default function NewListingPage() {
         beds: values.beds,
         baths: values.baths,
         imageUrls: imageUrls,
-        amenities: [], // Default amenities
-        period: 'yr', // Default period
+        amenities: [],
+        period: 'yr',
         createdAt: serverTimestamp(),
       };
 
@@ -110,7 +100,10 @@ export default function NewListingPage() {
         description: 'Your property has been listed.',
       });
 
-      router.push('/');
+      router.push('/').then(() => {
+        // This ensures navigation happens, then we can safely update state if needed,
+        // though unmounting on redirect is typical.
+      });
 
     } catch (error: any) {
       console.error("Error creating listing:", error);
@@ -152,20 +145,40 @@ export default function NewListingPage() {
                 )}
               />
               
-              <FormItem>
-                <FormLabel>Property Images</FormLabel>
-                <FormControl>
-                  <Input type="file" multiple accept="image/*" onChange={handleImageChange} />
-                </FormControl>
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  {imagePreviews.map((src, index) => (
-                    <div key={index} className="relative aspect-square">
-                        <Image src={src} alt={`Preview ${index + 1}`} fill className="rounded-md object-cover" />
+              <FormField
+                control={form.control}
+                name="images"
+                render={({ field: { onChange, value, ...rest } }) => (
+                  <FormItem>
+                    <FormLabel>Property Images</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        {...rest}
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files) {
+                            onChange(files);
+                            const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+                            setImagePreviews(newPreviews);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      {imagePreviews.map((src, index) => (
+                        <div key={index} className="relative aspect-square">
+                            <Image src={src} alt={`Preview ${index + 1}`} fill className="rounded-md object-cover" />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <FormMessage>{form.formState.errors.images?.message}</FormMessage>
-              </FormItem>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
 
               <FormField
                 control={form.control}
