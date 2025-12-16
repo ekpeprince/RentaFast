@@ -62,21 +62,25 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
     notFound();
   }
 
-  const image = PlaceHolderImages.find((img) => img.id === property.imageId);
+  const imageUrl = property.imageUrls && property.imageUrls.length > 0 
+    ? property.imageUrls[0] 
+    : (PlaceHolderImages.find((img) => img.id === 'lekki-apartment') || PlaceHolderImages[0]).imageUrl;
+
+  const imageHint = property.imageUrls && property.imageUrls.length > 0
+    ? 'user uploaded'
+    : 'modern apartment';
 
   return (
     <div className="relative min-h-screen pb-28">
       <div className="relative h-72 w-full sm:h-96">
-        {image && (
-          <Image
-            src={image.imageUrl}
-            alt={property.title}
-            fill
-            className="object-cover"
-            priority
-            data-ai-hint={image.imageHint}
-          />
-        )}
+        <Image
+          src={imageUrl}
+          alt={property.title}
+          fill
+          className="object-cover"
+          priority
+          data-ai-hint={imageHint}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
 

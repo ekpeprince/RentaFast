@@ -1,4 +1,6 @@
 
+import type { FieldValue } from 'firebase/firestore';
+
 export type Amenity = 'wifi' | 'power' | 'security';
 
 export interface Property {
@@ -11,8 +13,8 @@ export interface Property {
   type: 'Short-let' | 'Flat' | 'Duplex' | 'Self-con' | 'Penthouse';
   beds: number;
   baths: number;
-  imageId: string;
+  imageUrls: string[];
   amenities: Amenity[];
   period: 'yr' | 'mo';
-  createdAt: any; // Firestore ServerTimestamp
+  createdAt: FieldValue; 
 }

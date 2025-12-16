@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, serverTimestamp } from 'firebase/firestore';
-import type { Property } from '@/lib/types';
+import { useFirebase, useUser } from '@/firebase';
+import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
@@ -27,15 +28,18 @@ const listingSchema = z.object({
   type: z.enum(['Flat', 'Duplex', 'Short-let', 'Self-con', 'Penthouse']),
   beds: z.coerce.number().int().min(1, 'Must have at least one bed'),
   baths: z.coerce.number().int().min(1, 'Must have at least one bath'),
+  images: z.instanceof(FileList).refine((files) => files.length > 0, 'At least one image is required.'),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
 
 export default function NewListingPage() {
-  const { user, firestore } = useFirebase();
+  const { user } = useUser();
+  const { firestore, firebaseApp } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
@@ -50,8 +54,17 @@ export default function NewListingPage() {
     },
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+      setImagePreviews(newPreviews);
+      form.setValue('images', files);
+    }
+  };
+
   const onSubmit = async (values: ListingFormValues) => {
-    if (!user || !firestore) {
+    if (!user || !firestore || !firebaseApp) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -61,35 +74,53 @@ export default function NewListingPage() {
     }
 
     setIsLoading(true);
-
+    
     try {
+      const storage = getStorage(firebaseApp);
+      const imageUrls: string[] = [];
+
+      for (const file of Array.from(values.images)) {
+        const imageRef = ref(storage, `properties/${user.uid}/${uuidv4()}`);
+        await uploadBytes(imageRef, file);
+        const url = await getDownloadURL(imageRef);
+        imageUrls.push(url);
+      }
+
       const propertiesCol = collection(firestore, 'properties');
+      
       const newListingData = {
-        ...values,
         landlordId: user.uid,
-        period: 'yr',
-        amenities: [],
-        imageId: 'lekki-apartment', // Default or placeholder image
+        title: values.title,
+        location: values.location,
+        price: values.price,
+        description: values.description,
+        type: values.type,
+        beds: values.beds,
+        baths: values.baths,
+        imageUrls: imageUrls,
+        amenities: [], // Default amenities
+        period: 'yr', // Default period
         createdAt: serverTimestamp(),
       };
-      
-      // Use the non-blocking function for optimistic UI updates and proper error handling.
-      addDocumentNonBlocking(propertiesCol, newListingData);
 
+      await addDoc(propertiesCol, newListingData);
+      
       toast({
         title: 'Success!',
         description: 'Your property has been listed.',
       });
 
       router.push('/');
+
     } catch (error: any) {
+      console.error("Error creating listing:", error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: 'Could not create listing. Please try again.',
+        description: error.message || 'Could not create listing. Please try again.',
       });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
 
@@ -120,6 +151,22 @@ export default function NewListingPage() {
                   </FormItem>
                 )}
               />
+              
+              <FormItem>
+                <FormLabel>Property Images</FormLabel>
+                <FormControl>
+                  <Input type="file" multiple accept="image/*" onChange={handleImageChange} />
+                </FormControl>
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  {imagePreviews.map((src, index) => (
+                    <div key={index} className="relative aspect-square">
+                        <Image src={src} alt={`Preview ${index + 1}`} fill className="rounded-md object-cover" />
+                    </div>
+                  ))}
+                </div>
+                <FormMessage>{form.formState.errors.images?.message}</FormMessage>
+              </FormItem>
+
               <FormField
                 control={form.control}
                 name="location"

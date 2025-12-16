@@ -1,6 +1,8 @@
+
 export const firebaseConfig = {
   "projectId": "rentfast-v2",
   "appId": "1:685830534650:web:7ac3049c1c71536072e043",
+  "storageBucket": "rentfast-v2.appspot.com",
   "apiKey": "AIzaSyAol1fmKfMZ9M0AyYw9LBfJNkPcTOWKY5Q",
   "authDomain": "rentfast-v2.firebaseapp.com",
   "measurementId": "",

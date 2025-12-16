@@ -4,31 +4,36 @@ import { Heart, BedDouble, Bath } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property } from '@/lib/types';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from './ui/button';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface PropertyCardProps {
   listing: Property;
 }
 
 export default function PropertyCard({ listing }: PropertyCardProps) {
-  const image = PlaceHolderImages.find((img) => img.id === listing.imageId);
+  // Use the first uploaded image, or a placeholder if none exist.
+  const imageUrl = listing.imageUrls && listing.imageUrls.length > 0 
+    ? listing.imageUrls[0] 
+    : (PlaceHolderImages.find((img) => img.id === 'lekki-apartment') || PlaceHolderImages[0]).imageUrl;
+
+  const imageHint = listing.imageUrls && listing.imageUrls.length > 0
+    ? 'user uploaded'
+    : 'modern apartment';
 
   return (
     <Card className="overflow-hidden group transition-all duration-300 hover:shadow-xl">
       <div className="relative">
         <div className="aspect-w-4 aspect-h-3 w-full h-48">
-          {image && (
-            <Image
-              src={image.imageUrl}
-              alt={listing.title}
-              fill
-              className="object-cover transform transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              data-ai-hint={image.imageHint}
-            />
-          )}
+          <Image
+            src={imageUrl}
+            alt={listing.title}
+            fill
+            className="object-cover transform transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            data-ai-hint={imageHint}
+          />
         </div>
         <div className="absolute top-0 left-0 p-2">
           <Badge variant="accent" className="text-sm font-bold">
