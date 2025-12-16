@@ -7,7 +7,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useFirebase } from '@/firebase';
-import { createListing } from '@/lib/services';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import type { Property } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ const listingSchema = z.object({
 type ListingFormValues = z.infer<typeof listingSchema>;
 
 export default function NewListingPage() {
-  const { user } = useFirebase();
+  const { user, firestore } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +51,7 @@ export default function NewListingPage() {
   });
 
   const onSubmit = async (values: ListingFormValues) => {
-    if (!user) {
+    if (!user || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -62,13 +63,18 @@ export default function NewListingPage() {
     setIsLoading(true);
 
     try {
-      const listingData: Omit<Property, 'id' | 'landlordId' | 'createdAt'> = {
+      const propertiesCol = collection(firestore, 'properties');
+      const newListingData = {
         ...values,
+        landlordId: user.uid,
         period: 'yr',
         amenities: [],
         imageId: 'lekki-apartment', // Default or placeholder image
+        createdAt: serverTimestamp(),
       };
-      createListing(listingData, user);
+      
+      // Use the non-blocking function for optimistic UI updates and proper error handling.
+      addDocumentNonBlocking(propertiesCol, newListingData);
 
       toast({
         title: 'Success!',
