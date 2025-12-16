@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Bell, PlusCircle } from 'lucide-react';
-import { useUser, useDoc, useFirestore } from '@/firebase';
+import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -53,7 +53,10 @@ function AuthActions() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  const userProfileRef = user ? doc(firestore, 'users', user.uid) : null;
+  const userProfileRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
   const { data: userProfile } = useDoc<{ role: 'landlord' | 'tenant' }>(userProfileRef);
 
   if (isUserLoading) {
