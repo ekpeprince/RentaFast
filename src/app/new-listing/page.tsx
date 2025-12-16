@@ -8,7 +8,6 @@ import * as z from 'zod';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +26,7 @@ const listingSchema = z.object({
   type: z.enum(['Flat', 'Duplex', 'Short-let', 'Self-con', 'Penthouse']),
   beds: z.coerce.number().int().min(1, 'Must have at least one bed'),
   baths: z.coerce.number().int().min(1, 'Must have at least one bath'),
-  images: z.custom<FileList>().refine((files) => files.length > 0, 'At least one image is required.'),
+  images: z.instanceof(FileList).refine((files) => files.length > 0, 'At least one image is required.'),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
@@ -63,57 +62,65 @@ export default function NewListingPage() {
       return;
     }
 
-    setIsLoading(true);
-    
+    setIsLoading(true); // START: Sets button to 'Creating...'
+
     try {
-      const storage = getStorage(firebaseApp);
-      const imageUrls: string[] = [];
+        // 1. Image Upload Logic
+        const storage = getStorage(firebaseApp);
+        // Map files to promises for upload and getting download URL
+        const imagePromises = Array.from(values.images).map(file => {
+            const imageRef = ref(storage, `properties/${user.uid}/${file.name}`);
+            return uploadBytes(imageRef, file)
+                .then(snapshot => getDownloadURL(snapshot.ref));
+        });
+        const imageUrls = await Promise.all(imagePromises);
 
-      for (const file of Array.from(values.images)) {
-        const imageRef = ref(storage, `properties/${user.uid}/${uuidv4()}`);
-        await uploadBytes(imageRef, file);
-        const url = await getDownloadURL(imageRef);
-        imageUrls.push(url);
-      }
+        // 2. Firestore Write Logic
+        const newListingData = {
+            landlordId: user.uid,
+            title: values.title,
+            location: values.location,
+            price: values.price,
+            description: values.description,
+            type: values.type,
+            beds: values.beds,
+            baths: values.baths,
+            imageUrls,
+            amenities: [], // Default amenities
+            period: 'yr',
+            createdAt: serverTimestamp(),
+        };
+        await addDoc(collection(firestore, "properties"), newListingData);
 
-      const propertiesCol = collection(firestore, 'properties');
-      
-      const newListingData = {
-        landlordId: user.uid,
-        title: values.title,
-        location: values.location,
-        price: values.price,
-        description: values.description,
-        type: values.type,
-        beds: values.beds,
-        baths: values.baths,
-        imageUrls: imageUrls,
-        amenities: [],
-        period: 'yr',
-        createdAt: serverTimestamp(),
-      };
+        // --- SUCCESS PATH ---
+        
+        // 3. Show Success Toast
+        toast({
+            title: 'Success!',
+            description: 'Your property has been listed successfully.',
+        });
+        
+        // 4. CLEANUP (Crucial change): Reset loading state before redirect
+        setIsLoading(false); 
 
-      await addDoc(propertiesCol, newListingData);
-      
-      toast({
-        title: 'Success!',
-        description: 'Your property has been listed.',
-      });
-
-      router.push('/').then(() => {
-        // This ensures navigation happens, then we can safely update state if needed,
-        // though unmounting on redirect is typical.
-      });
-
+        // 5. Redirect
+        router.push('/');
+        
     } catch (error: any) {
-      console.error("Error creating listing:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'Could not create listing. Please try again.',
-      });
-    } finally {
-        setIsLoading(false);
+        // --- FAILURE PATH ---
+        
+        // Log the full error for debugging
+        console.error("Listing Submission Error:", error); 
+        
+        // Show user-friendly error toast
+        toast({
+            variant: 'destructive',
+            title: 'Uh oh! Something went wrong.',
+            description: error.message || 'Could not create listing. Please try again.',
+        });
+        
+        // 6. CLEANUP (Crucial change): Reset loading state on failure
+        setIsLoading(false); 
     }
   };
 
