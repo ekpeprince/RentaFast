@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import HomeHeader from '@/components/home-header';
 import PropertySearch from '@/components/property-search';
 import CategoryFilters from '@/components/category-filters';
@@ -12,7 +12,7 @@ import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { collection, query, orderBy } from 'firebase/firestore';
 
-function ListingsGrid() {
+function ListingsGrid({ categoryFilter }: { categoryFilter: string }) {
   const firestore = useFirestore();
 
   const listingsQuery = useMemoFirebase(
@@ -24,10 +24,16 @@ function ListingsGrid() {
   if (isLoading) {
     return <ListingsSkeleton />;
   }
+  
+  const filteredListings =
+    categoryFilter === 'All'
+      ? listings
+      : listings?.filter((listing) => listing.type === categoryFilter);
+
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {listings?.map((listing) => (
+      {filteredListings?.map((listing) => (
         <Link key={listing.id} href={`/property/${listing.id}`}>
           <PropertyCard listing={listing} />
         </Link>
@@ -53,6 +59,8 @@ function ListingsSkeleton() {
 }
 
 export default function Home() {
+  const [categoryFilter, setCategoryFilter] = useState('All');
+
   return (
     <main className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
       <div className="space-y-8">
@@ -60,12 +68,15 @@ export default function Home() {
         <PropertySearch />
         <div>
           <h2 className="text-xl font-bold text-primary mb-4">Categories</h2>
-          <CategoryFilters />
+          <CategoryFilters 
+            activeCategory={categoryFilter}
+            setActiveCategory={setCategoryFilter}
+          />
         </div>
         <div>
           <h2 className="text-xl font-bold text-primary mb-4">Fresh on the Market</h2>
           <Suspense fallback={<ListingsSkeleton />}>
-            <ListingsGrid />
+            <ListingsGrid categoryFilter={categoryFilter} />
           </Suspense>
         </div>
       </div>

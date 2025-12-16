@@ -1,13 +1,17 @@
+
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const categories = ['All', 'Short-let', 'Flat', 'Duplex', 'Self-con'];
+const categories = ['All', 'Short-let', 'Flat', 'Duplex', 'Self-con', 'Penthouse'];
 
-export default function CategoryFilters() {
-  const [activeCategory, setActiveCategory] = useState('All');
+interface CategoryFiltersProps {
+  activeCategory: string;
+  setActiveCategory: (category: string) => void;
+}
+
+export default function CategoryFilters({ activeCategory, setActiveCategory }: CategoryFiltersProps) {
 
   return (
     <div className="overflow-x-auto pb-2 -mx-4 px-4">
