@@ -1,5 +1,5 @@
 import { Wifi, Zap, ShieldCheck, Icon } from 'lucide-react';
-import type { Amenity } from '@/lib/mock-data';
+import type { Amenity } from '@/lib/types';
 
 interface AmenityIconProps {
   amenity: Amenity;
