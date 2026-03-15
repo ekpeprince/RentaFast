@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import HomeHeader from '@/components/home-header';
 import PropertySearch from '@/components/property-search';
 import CategoryFilters from '@/components/category-filters';
@@ -12,7 +11,7 @@ import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { collection, query, orderBy } from 'firebase/firestore';
 
-function ListingsGrid({ categoryFilter }: { categoryFilter: string }) {
+function ListingsGrid({ categoryFilter, searchQuery }: { categoryFilter: string; searchQuery: string }) {
   const firestore = useFirestore();
 
   const listingsQuery = useMemoFirebase(
@@ -21,19 +20,35 @@ function ListingsGrid({ categoryFilter }: { categoryFilter: string }) {
   );
   const { data: listings, isLoading } = useCollection<Property>(listingsQuery);
 
+  const filteredListings = useMemo(() => {
+    if (!listings) return [];
+    
+    return listings.filter((listing) => {
+      const matchesCategory = categoryFilter === 'All' || listing.type === categoryFilter;
+      const matchesSearch = 
+        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        listing.location.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesCategory && matchesSearch;
+    });
+  }, [listings, categoryFilter, searchQuery]);
+
   if (isLoading) {
     return <ListingsSkeleton />;
   }
-  
-  const filteredListings =
-    categoryFilter === 'All'
-      ? listings
-      : listings?.filter((listing) => listing.type === categoryFilter);
 
+  if (filteredListings.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-xl font-semibold text-muted-foreground">No properties found</p>
+        <p className="text-muted-foreground">Try adjusting your search or filters</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {filteredListings?.map((listing) => (
+      {filteredListings.map((listing) => (
         <Link key={listing.id} href={`/property/${listing.id}`}>
           <PropertyCard listing={listing} />
         </Link>
@@ -60,12 +75,13 @@ function ListingsSkeleton() {
 
 export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <main className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
       <div className="space-y-8">
         <HomeHeader />
-        <PropertySearch />
+        <PropertySearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         <div>
           <h2 className="text-xl font-bold text-primary mb-4">Categories</h2>
           <CategoryFilters 
@@ -76,7 +92,7 @@ export default function Home() {
         <div>
           <h2 className="text-xl font-bold text-primary mb-4">Fresh on the Market</h2>
           <Suspense fallback={<ListingsSkeleton />}>
-            <ListingsGrid categoryFilter={categoryFilter} />
+            <ListingsGrid categoryFilter={categoryFilter} searchQuery={searchQuery} />
           </Suspense>
         </div>
       </div>
