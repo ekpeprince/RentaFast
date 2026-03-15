@@ -1,40 +1,40 @@
 {
   "placeholderImages": [
     {
-      "id": "lekki-apartment",
-      "description": "A modern 3-bedroom apartment in GRA Port Harcourt.",
+      "id": "calabar-villa",
+      "description": "A luxury 4-bedroom bungalow in State Housing, Calabar.",
       "imageUrl": "https://images.unsplash.com/photo-1664892798972-079f15663b16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtb2Rlcm4lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzY1NDY4NTk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "modern apartment"
+      "imageHint": "modern villa"
     },
     {
-      "id": "ikeja-duplex",
-      "description": "A spacious 5-bedroom duplex in Uyo.",
+      "id": "mcc-apartment",
+      "description": "Spacious 3-bedroom apartment along MCC Road, Calabar.",
       "imageUrl": "https://images.unsplash.com/photo-1647336811715-d7c7837c50d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxsdXh1cnklMjBkdXBsZXh8ZW58MHx8fHwxNzY1NDg0MTk0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "luxury duplex"
+      "imageHint": "luxury apartment"
     },
     {
-      "id": "maitama-flat",
-      "description": "A luxury flat in Calabar.",
+      "id": "parliamentary-duplex",
+      "description": "Executive 5-bedroom duplex in Parliamentary Extension.",
       "imageUrl": "https://images.unsplash.com/photo-1760259904989-3c9b99ad49d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhYnVqYSUyMGZsYXR8ZW58MHx8fHwxNzY1NDg0MTk0fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "modern flat"
+      "imageHint": "modern duplex"
     },
     {
-      "id": "yaba-shortlet",
-      "description": "A cozy short-let in Benin City.",
+      "id": "etta-agbo-studio",
+      "description": "Cozy studio apartment near Unical, Etta Agbo.",
       "imageUrl": "https://images.unsplash.com/photo-1542855596-45eb2695c74c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjb3p5JTIwYXBhcnRtZW50fGVufDB8fHx8MTc2NTQ2MDg0NXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "cozy apartment"
+      "imageHint": "cozy studio"
     },
     {
-      "id": "victoria-island-penthouse",
-      "description": "An executive penthouse in Port Harcourt.",
+      "id": "marian-penthouse",
+      "description": "Luxury penthouse with views of Marian Road.",
       "imageUrl": "https://images.unsplash.com/photo-1610394001485-a3eceff6a4d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZW50aG91c2UlMjBvY2VhbnxlbnwwfHx8fDE3NjU0ODQxOTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "penthouse city"
     },
     {
-      "id": "lekki-studio",
-      "description": "A compact studio in Asaba.",
+      "id": "8miles-house",
+      "description": "Affordable family home in 8 Miles area, Calabar.",
       "imageUrl": "https://images.unsplash.com/photo-1633505765486-e404bbbec654?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzdHVkaW8lMjBhcGFydG1lbnR8ZW58MHx8fHwxNzY1NDg0MTk1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "studio apartment"
+      "imageHint": "family home"
     }
   ]
 }
