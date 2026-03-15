@@ -3,6 +3,15 @@ import type { FieldValue } from 'firebase/firestore';
 
 export type Amenity = 'wifi' | 'power' | 'security';
 
+export interface UserProfile {
+  id: string;
+  role: 'landlord' | 'tenant';
+  displayName?: string;
+  phoneNumber?: string;
+  photoURL?: string;
+  isVerified?: boolean;
+}
+
 export interface Property {
   id: string;
   landlordId: string;

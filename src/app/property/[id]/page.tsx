@@ -1,8 +1,9 @@
+
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Wifi, Zap, ShieldCheck, BedDouble, Bath, Building, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -10,8 +11,9 @@ import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Badge } from '@/components/ui/badge';
 import AmenityIcon from '@/components/amenity-icon';
-import type { Property } from '@/lib/types';
+import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -58,6 +60,13 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
     [firestore, params.id]
   );
   const { data: property, isLoading } = useDoc<Property>(propertyRef);
+
+  // Fetch landlord info
+  const landlordRef = useMemoFirebase(
+    () => (firestore && property ? doc(firestore, 'users', property.landlordId) : null),
+    [firestore, property?.landlordId]
+  );
+  const { data: landlord, isLoading: isLandlordLoading } = useDoc<UserProfile>(landlordRef);
 
   const handleStartChat = async () => {
     if (!user || !firestore || !property) {
@@ -139,8 +148,8 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
           </CarouselContent>
           {propertyImages.length > 1 && (
             <>
-              <CarouselPrevious className="left-4" />
-              <CarouselNext className="right-4" />
+              <CarouselPrevious className="left-12" />
+              <CarouselNext className="right-12" />
             </>
           )}
         </Carousel>
@@ -148,63 +157,119 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
       </div>
 
       <div className="container mx-auto -mt-20 px-4 sm:px-6 lg:px-8">
-        <div className="relative space-y-6">
-          <Card className="shadow-xl border-none">
-            <CardHeader className="p-8">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div className="space-y-2">
-                  <CardTitle className="text-3xl font-extrabold text-primary">{property.title}</CardTitle>
-                  <p className="text-lg text-muted-foreground">{property.location}</p>
-                </div>
-                <div className="flex flex-col items-end">
-                  <p className="text-3xl font-black text-accent">
-                    {formatCurrency(property.price)}
-                  </p>
-                  <p className="text-sm font-medium text-muted-foreground capitalize">per {property.period === 'yr' ? 'year' : 'month'}</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-8 pt-0 space-y-8">
-               <div className="flex flex-wrap items-center gap-8 py-6 border-y">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Building className="h-6 w-6 text-primary" />
+        <div className="relative grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="shadow-xl border-none">
+              <CardHeader className="p-8">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div className="space-y-2">
+                    <CardTitle className="text-3xl font-extrabold text-primary">{property.title}</CardTitle>
+                    <p className="text-lg text-muted-foreground">{property.location}</p>
                   </div>
-                  <span className="font-bold text-lg">{property.type}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <BedDouble className="h-6 w-6 text-primary" />
+                  <div className="flex flex-col items-end">
+                    <p className="text-3xl font-black text-accent">
+                      {formatCurrency(property.price)}
+                    </p>
+                    <p className="text-sm font-medium text-muted-foreground capitalize">per {property.period === 'yr' ? 'year' : 'month'}</p>
                   </div>
-                  <span className="font-bold text-lg">{property.beds} Bedrooms</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Bath className="h-6 w-6 text-primary" />
+              </CardHeader>
+              <CardContent className="p-8 pt-0 space-y-8">
+                 <div className="flex flex-wrap items-center gap-8 py-6 border-y">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <Building className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="font-bold text-lg">{property.type}</span>
                   </div>
-                  <span className="font-bold text-lg">{property.baths} Bathrooms</span>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <BedDouble className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="font-bold text-lg">{property.beds} Bedrooms</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-full">
+                      <Bath className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="font-bold text-lg">{property.baths} Bathrooms</span>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <h3 className="text-xl font-bold text-primary mb-4">About this property</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg whitespace-pre-wrap">
-                  {property.description}
-                </p>
-              </div>
-
-               {property.amenities && property.amenities.length > 0 && (
                 <div>
-                  <h3 className="text-xl font-bold text-primary mb-4">Amenities</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {property.amenities.map((amenity) => (
-                      <AmenityIcon key={amenity} amenity={amenity as any} />
-                    ))}
-                  </div>
+                  <h3 className="text-xl font-bold text-primary mb-4">About this property</h3>
+                  <p className="text-muted-foreground leading-relaxed text-lg whitespace-pre-wrap">
+                    {property.description}
+                  </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                 {property.amenities && property.amenities.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-bold text-primary mb-4">Amenities</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {property.amenities.map((amenity) => (
+                        <AmenityIcon key={amenity} amenity={amenity as any} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-xl">Listed by</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isLandlordLoading ? (
+                  <Skeleton className="h-12 w-full" />
+                ) : landlord ? (
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
+                      <UserIcon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg flex items-center gap-1">
+                        {landlord.displayName || 'Property Agent'}
+                        {landlord.isVerified && <ShieldCheck className="h-4 w-4 text-accent" />}
+                      </h4>
+                      {landlord.isVerified && <p className="text-xs text-accent font-bold">Verified Agent</p>}
+                    </div>
+                  </div>
+                ) : null}
+                
+                <div className="pt-4 space-y-2">
+                  <Button 
+                    className="w-full h-12 text-lg font-bold" 
+                    variant="default"
+                    onClick={handleStartChat}
+                    disabled={isStartingChat || user?.uid === property.landlordId}
+                  >
+                    {isStartingChat ? 'Connecting...' : 'Message Agent'}
+                  </Button>
+                  {landlord?.phoneNumber && (
+                    <Button variant="outline" className="w-full h-12" asChild>
+                      <a href={`tel:${landlord.phoneNumber}`}>
+                        <Phone className="mr-2 h-4 w-4" />
+                        Call Agent
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-primary text-primary-foreground">
+              <CardHeader>
+                <CardTitle className="text-lg">Security First</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm opacity-90">Always visit the property in person before making any payments. Report any suspicious listings.</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 

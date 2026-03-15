@@ -8,9 +8,17 @@ import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { UserProfile } from '@/lib/types';
 
 function UserGreeting() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const profileRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: profile } = useDoc<UserProfile>(profileRef);
 
   if (isUserLoading) {
     return <Skeleton className="h-8 w-48" />;
@@ -34,16 +42,18 @@ function UserGreeting() {
     return name[0];
   };
 
+  const displayName = profile?.displayName || user.displayName || 'User';
+
   return (
     <div className="flex items-center gap-4">
       <Link href="/account">
         <Avatar className="h-12 w-12 cursor-pointer border-2 border-primary/10">
-          <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-          <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+          <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
+          <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
         </Avatar>
       </Link>
-      <div>
-        <h1 className="text-xl font-bold text-primary">Hello, {user.displayName || 'User'} 👋</h1>
+      <div className="hidden sm:block">
+        <h1 className="text-xl font-bold text-primary">Hello, {displayName} 👋</h1>
         <p className="text-sm text-muted-foreground">Find your next home.</p>
       </div>
     </div>
@@ -58,7 +68,7 @@ function AuthActions() {
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
-  const { data: userProfile } = useDoc<{ role: 'landlord' | 'tenant' }>(userProfileRef);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   if (isUserLoading) {
     return (

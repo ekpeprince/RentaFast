@@ -14,6 +14,23 @@
           "type": "string",
           "description": "The user's role in the application (either 'landlord' or 'tenant').",
           "enum": ["landlord", "tenant"]
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's preferred public name."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Contact phone number for the user."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL to the user's profile picture."
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Whether the user has been verified by RentaFast admins.",
+          "default": false
         }
       },
       "required": [
@@ -53,7 +70,15 @@
         "imageUrls": {
           "type": "array",
           "items": { "type": "string" }
-        }
+        },
+        "beds": { "type": "number" },
+        "baths": { "type": "number" },
+        "amenities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "period": { "type": "string", "enum": ["yr", "mo"] },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": [
         "landlordId",
