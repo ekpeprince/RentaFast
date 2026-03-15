@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import HomeHeader from '@/components/home-header';
 import { Button } from '@/components/ui/button';
-import { MapPin, Sparkles, ShieldCheck, ArrowRight, Building, Users, Zap, Search } from 'lucide-react';
+import { MapPin, Sparkles, ShieldCheck, Building, Zap, Search } from 'lucide-react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Badge } from '@/components/ui/badge';
@@ -24,23 +24,24 @@ export default function Home() {
             src={heroImage} 
             alt="Luxury home in Calabar" 
             fill 
-            className="object-cover brightness-[0.3]"
+            className="object-cover brightness-[0.4]"
             priority
             data-ai-hint="luxury villa"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background/80" />
+          {/* Sharper overlay to prevent 'blurry' look at the bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
         </div>
 
         {/* Hero Content */}
         <div className="container relative z-10 px-4 mx-auto text-center space-y-6">
           <div className="space-y-3">
-            <Badge className="bg-accent text-white border-none px-4 py-1 text-xs font-bold uppercase tracking-widest animate-pulse">
+            <Badge className="bg-accent text-white border-none px-4 py-1 text-xs font-bold uppercase tracking-widest">
               Now Live in Cross River
             </Badge>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none text-white">
               Rent Smarter in <br/><span className="text-accent">Cross River State</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed">
               Find verified homes in Calabar, Ikom, and Ogoja with AI matching and local neighborhood vibe checks.
             </p>
           </div>
@@ -52,7 +53,7 @@ export default function Home() {
                 Browse Marketplace
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 hover:text-white transition-transform hover:scale-105 active:scale-95">
+            <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-white/10 border-white/40 text-white hover:bg-white/20 hover:text-white transition-transform hover:scale-105 active:scale-95">
               <Link href="/guides">
                 Explore Neighborhoods
               </Link>
@@ -61,48 +62,48 @@ export default function Home() {
 
           {/* Quick Stats/Features */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/40 text-[10px] sm:text-xs font-bold text-white">
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-black/60 text-[10px] sm:text-xs font-bold text-white">
                <ShieldCheck className="h-4 w-4 text-accent" /> 100% Verified
              </div>
-             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/40 text-[10px] sm:text-xs font-bold text-white">
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-black/60 text-[10px] sm:text-xs font-bold text-white">
                <Zap className="h-4 w-4 text-accent" /> Direct Contact
              </div>
-             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/40 text-[10px] sm:text-xs font-bold text-white">
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-black/60 text-[10px] sm:text-xs font-bold text-white">
                <Sparkles className="h-4 w-4 text-accent" /> AI Home Matcher
              </div>
           </div>
         </div>
 
-        {/* Minimized Value Props (Footer-aligned) */}
+        {/* Minimized Value Props (Footer-aligned) - Removed backdrop-blur for clarity */}
         <div className="container mx-auto px-4 mt-auto pb-8 relative z-10 hidden md:block">
           <div className="grid grid-cols-3 gap-6">
-            <Link href="/guides" className="group p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all flex items-start gap-4">
+            <Link href="/guides" className="group p-4 rounded-2xl bg-black/40 border border-white/10 hover:bg-black/60 transition-all flex items-start gap-4">
               <div className="h-10 w-10 shrink-0 rounded-xl bg-primary/20 flex items-center justify-center text-accent">
                 <MapPin className="h-5 w-5" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-black text-white">Vibe Guides</h3>
-                <p className="text-[11px] text-white/60 leading-tight">Get an instant vibe check on local neighborhoods.</p>
+                <p className="text-[11px] text-white/70 leading-tight">Get an instant vibe check on local neighborhoods.</p>
               </div>
             </Link>
 
-            <Link href="/matches" className="group p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all flex items-start gap-4">
+            <Link href="/matches" className="group p-4 rounded-2xl bg-black/40 border border-white/10 hover:bg-black/60 transition-all flex items-start gap-4">
               <div className="h-10 w-10 shrink-0 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-black text-white">Smart Matcher</h3>
-                <p className="text-[11px] text-white/60 leading-tight">AI finds the perfect home based on your needs.</p>
+                <p className="text-[11px] text-white/70 leading-tight">AI finds the perfect home based on your needs.</p>
               </div>
             </Link>
 
-            <Link href="/new-listing" className="group p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all flex items-start gap-4">
+            <Link href="/new-listing" className="group p-4 rounded-2xl bg-black/40 border border-white/10 hover:bg-black/60 transition-all flex items-start gap-4">
               <div className="h-10 w-10 shrink-0 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
                 <Building className="h-5 w-5" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-sm font-black text-white">List Property</h3>
-                <p className="text-[11px] text-white/60 leading-tight">Reach verified tenants in Calabar & Ikom.</p>
+                <p className="text-[11px] text-white/70 leading-tight">Reach verified tenants in Calabar & Ikom.</p>
               </div>
             </Link>
           </div>
