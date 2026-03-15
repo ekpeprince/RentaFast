@@ -61,10 +61,8 @@ function UserGreeting() {
     return name[0];
   };
 
-  // Improved name resolution logic
   const emailPrefix = user.email?.split('@')[0] || 'User';
   const rawDisplayName = profile?.displayName || user.displayName || emailPrefix;
-  // Clean up the display name for the greeting (capitalize and take the first word)
   const greetingName = rawDisplayName.split(' ')[0];
   const capitalizedGreetingName = greetingName.charAt(0).toUpperCase() + greetingName.slice(1);
 
@@ -96,6 +94,14 @@ function UserGreeting() {
               <Link href="/my-listings" className="flex items-center cursor-pointer">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 <span>My Listings</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          {profile?.role === 'admin' && (
+            <DropdownMenuItem asChild>
+              <Link href="/admin" className="flex items-center cursor-pointer">
+                <ShieldCheck className="mr-2 h-4 w-4 text-accent" />
+                <span>Admin Portal</span>
               </Link>
             </DropdownMenuItem>
           )}
