@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'generateListingDescriptionPrompt',
   input: { schema: GenerateDescriptionInputSchema },
   output: { schema: GenerateDescriptionOutputSchema },
-  prompt: `You are an expert real estate copywriter specializing in the Nigerian property market (Lagos, Abuja, Port Harcourt, etc.).
+  prompt: `You are an expert real estate copywriter specializing in the Cross River State property market (Calabar, Ikom, Ogoja, Obudu, etc.).
   
   Generate a catchy, professional, and detailed property description for a rental listing based on the following details:
   
@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   Location: {{{location}}}
   Key Features/Notes: {{{keyFeatures}}}
   
-  The description should be inviting, highlight the lifestyle benefits of the location, and use persuasive language suitable for the RentaFast platform. Ensure it sounds premium but authentic to the local context. Keep it under 200 words.`,
+  The description should be inviting, highlight the unique lifestyle benefits of the specific area in Cross River (e.g., the serenity of Obudu, the commercial pulse of Ikom, or the greenery of Calabar), and use persuasive language. Ensure it sounds premium but authentic to the local context. Keep it under 200 words.`,
 });
 
 const generateListingDescriptionFlow = ai.defineFlow(
