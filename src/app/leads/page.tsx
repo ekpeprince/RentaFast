@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, where, orderBy, doc, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -100,23 +100,24 @@ export default function LeadsPage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
   // 2. Fetch leads (applications where user is landlord)
+  // Guarded by profile role check to prevent unauthorized listing attempts
   const leadsQuery = useMemoFirebase(
-    () => (firestore && user ? query(
+    () => (firestore && user && profile && (profile.role === 'landlord' || profile.role === 'admin') ? query(
       collection(firestore, 'applications'), 
       where('landlordId', '==', user.uid),
       orderBy('createdAt', 'desc')
     ) : null),
-    [firestore, user?.uid]
+    [firestore, user?.uid, profile]
   );
   const { data: leads, isLoading: isLeadsLoading } = useCollection<Application>(leadsQuery);
 
   // 3. Fetch landlord's properties for performance insights
   const propertiesQuery = useMemoFirebase(
-    () => (firestore && user ? query(
+    () => (firestore && user && profile && (profile.role === 'landlord' || profile.role === 'admin') ? query(
       collection(firestore, 'properties'),
       where('landlordId', '==', user.uid)
     ) : null),
-    [firestore, user?.uid]
+    [firestore, user?.uid, profile]
   );
   const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesQuery);
 

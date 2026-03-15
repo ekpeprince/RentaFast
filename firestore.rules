@@ -69,8 +69,11 @@ service cloud.firestore {
 
     // 4. Applications
     match /applications/{applicationId} {
-      allow get: if isSignedIn() && (request.auth.uid == resource.data.tenantId || request.auth.uid == resource.data.landlordId);
-      allow list: if isSignedIn() && (request.auth.uid == resource.data.tenantId || request.auth.uid == resource.data.landlordId);
+      allow get, list: if isSignedIn() && (
+        request.auth.uid == resource.data.tenantId || 
+        request.auth.uid == resource.data.landlordId || 
+        isAdmin()
+      );
       allow create: if isSignedIn() && request.resource.data.tenantId == request.auth.uid;
       allow update: if isSignedIn() && (request.auth.uid == resource.data.landlordId || isAdmin());
     }
