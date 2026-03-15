@@ -29,7 +29,18 @@ export interface Property {
   period: 'yr' | 'mo';
   viewCount?: number;
   favoriteCount?: number;
+  averageRating?: number;
+  reviewCount?: number;
   createdAt: FieldValue; 
+}
+
+export interface Review {
+  id: string;
+  reviewerId: string;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: FieldValue;
 }
 
 export interface Chat {

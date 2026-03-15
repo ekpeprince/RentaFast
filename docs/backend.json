@@ -89,6 +89,8 @@
         "period": { "type": "string", "enum": ["yr", "mo"] },
         "viewCount": { "type": "number", "default": 0 },
         "favoriteCount": { "type": "number", "default": 0 },
+        "averageRating": { "type": "number", "default": 0 },
+        "reviewCount": { "type": "number", "default": 0 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": [
@@ -98,6 +100,19 @@
         "price",
         "description"
       ]
+    },
+    "Review": {
+      "title": "Review",
+      "type": "object",
+      "description": "A user-submitted review for a property.",
+      "properties": {
+        "reviewerId": { "type": "string" },
+        "reviewerName": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reviewerId", "reviewerName", "rating", "comment"]
     },
     "Chat": {
       "title": "Chat",
@@ -194,6 +209,12 @@
         "$ref": "#/entities/Property"
       },
       "description": "Stores property listings."
+    },
+    "/properties/{propertyId}/reviews/{reviewId}": {
+      "schema": {
+        "$ref": "#/entities/Review"
+      },
+      "description": "Stores reviews for a property."
     },
     "/chats/{chatId}": {
       "schema": {

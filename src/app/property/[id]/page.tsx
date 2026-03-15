@@ -3,7 +3,7 @@
 
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon, Eye } from 'lucide-react';
+import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon, Eye, Star } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -14,6 +14,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Badge } from '@/components/ui/badge';
 import AmenityIcon from '@/components/amenity-icon';
 import RentNowDialog from '@/components/rent-now-dialog';
+import ReviewSection from '@/components/review-section';
 import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect } from 'react';
@@ -181,6 +182,11 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                       <Badge variant="secondary" className="bg-primary/5 text-primary border-none">
                         <Eye className="h-3 w-3 mr-1" /> {property.viewCount || 0} views
                       </Badge>
+                      {property.reviewCount ? (
+                         <Badge variant="secondary" className="bg-accent/10 text-accent border-none font-bold">
+                          <Star className="h-3 w-3 mr-1 fill-accent" /> {property.reviewCount} Reviews
+                        </Badge>
+                      ) : null}
                     </div>
                     <CardTitle className="text-3xl font-extrabold text-primary">{property.title}</CardTitle>
                     <p className="text-lg text-muted-foreground">{property.location}</p>
@@ -232,6 +238,10 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                     </div>
                   </div>
                 )}
+
+                <div className="pt-8 border-t">
+                  <ReviewSection propertyId={params.id} />
+                </div>
               </CardContent>
             </Card>
           </div>
