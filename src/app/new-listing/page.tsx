@@ -19,6 +19,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { LocationAutocomplete } from '@/components/location-autocomplete';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -255,7 +256,11 @@ export default function NewListingPage() {
                       <FormItem>
                         <FormLabel className="text-lg font-bold">Location</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Lekki Phase 1, Lagos" className="h-12" {...field} />
+                          <LocationAutocomplete 
+                            value={field.value} 
+                            onChange={field.onChange} 
+                            placeholder="Select neighborhood..." 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
