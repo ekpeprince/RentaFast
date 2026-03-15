@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -36,14 +37,14 @@ function UserGreeting() {
   return (
     <div className="flex items-center gap-4">
       <Link href="/account">
-        <Avatar className="h-12 w-12 cursor-pointer">
+        <Avatar className="h-12 w-12 cursor-pointer border-2 border-primary/10">
           <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
           <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
         </Avatar>
       </Link>
       <div>
-        <h1 className="text-2xl font-bold text-primary">Hello, {user.displayName || 'User'} 👋</h1>
-        <p className="text-muted-foreground">Let's find your new home.</p>
+        <h1 className="text-xl font-bold text-primary">Hello, {user.displayName || 'User'} 👋</h1>
+        <p className="text-sm text-muted-foreground">Find your next home.</p>
       </div>
     </div>
   );
@@ -82,30 +83,33 @@ function AuthActions() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 sm:gap-2">
       {userProfile?.role === 'landlord' && (
         <>
-          <Button asChild variant="outline" className="hidden sm:flex">
+          <Button asChild variant="ghost" size="icon" className="hidden sm:flex" title="My Listings">
             <Link href="/my-listings">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              My Listings
+              <LayoutDashboard className="h-5 w-5 text-primary" />
             </Link>
           </Button>
-          <Button asChild variant="accent">
+          <Button asChild variant="accent" size="sm" className="hidden sm:flex">
             <Link href="/new-listing">
               <PlusCircle className="mr-2 h-4 w-4" />
-              List Property
+              List
             </Link>
           </Button>
         </>
       )}
+      <Button asChild variant="ghost" size="icon" title="Messages">
+        <Link href="/messages">
+          <MessageSquare className="h-5 w-5 text-primary" />
+        </Link>
+      </Button>
       <Button variant="ghost" size="icon" className="relative">
-        <Bell className="h-6 w-6 text-primary" />
-        <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+        <Bell className="h-5 w-5 text-primary" />
+        <span className="absolute top-2 right-2 flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
         </span>
-        <span className="sr-only">View notifications</span>
       </Button>
     </div>
   );
@@ -113,7 +117,7 @@ function AuthActions() {
 
 export default function HomeHeader() {
   return (
-    <header className="flex items-center justify-between gap-4">
+    <header className="flex items-center justify-between gap-4 py-2">
       <UserGreeting />
       <AuthActions />
     </header>

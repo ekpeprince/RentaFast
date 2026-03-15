@@ -1,3 +1,4 @@
+
 import type { FieldValue } from 'firebase/firestore';
 
 export type Amenity = 'wifi' | 'power' | 'security';
@@ -16,4 +17,20 @@ export interface Property {
   amenities: Amenity[];
   period: 'yr' | 'mo';
   createdAt: FieldValue; 
+}
+
+export interface Chat {
+  id: string;
+  participants: string[];
+  propertyId: string;
+  propertyTitle: string;
+  lastMessage: string;
+  updatedAt: FieldValue;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  createdAt: FieldValue;
 }

@@ -1,11 +1,11 @@
 
 'use client';
 
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Wifi, Zap, ShieldCheck, BedDouble, Bath, Building } from 'lucide-react';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { doc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AmenityIcon from '@/components/amenity-icon';
 import type { Property } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
 
 function PropertyDetailsSkeleton() {
   return (
@@ -47,12 +48,59 @@ function PropertyDetailsSkeleton() {
 
 
 export default function PropertyPage({ params }: { params: { id: string } }) {
+  const { user } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
+  const [isStartingChat, setIsStartingChat] = useState(false);
+
   const propertyRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'properties', params.id) : null),
     [firestore, params.id]
   );
   const { data: property, isLoading } = useDoc<Property>(propertyRef);
+
+  const handleStartChat = async () => {
+    if (!user || !firestore || !property) {
+      if (!user) router.push('/login');
+      return;
+    }
+
+    setIsStartingChat(true);
+
+    try {
+      // Check if a chat already exists between these two for this property
+      const chatsRef = collection(firestore, 'chats');
+      const q = query(
+        chatsRef, 
+        where('participants', 'array-contains', user.uid),
+        where('propertyId', '==', property.id)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      let chatId = '';
+
+      if (!querySnapshot.empty) {
+        chatId = querySnapshot.docs[0].id;
+      } else {
+        // Create new chat
+        const newChat = {
+          participants: [user.uid, property.landlordId],
+          propertyId: property.id,
+          propertyTitle: property.title,
+          lastMessage: 'Conversation started',
+          updatedAt: serverTimestamp(),
+        };
+        const docRef = await addDoc(chatsRef, newChat);
+        chatId = docRef.id;
+      }
+
+      router.push(`/chat/${chatId}`);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
 
   if (isLoading) {
     return <PropertyDetailsSkeleton />;
@@ -66,10 +114,6 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
     ? property.imageUrls[0] 
     : (PlaceHolderImages.find((img) => img.id === 'lekki-apartment') || PlaceHolderImages[0]).imageUrl;
 
-  const imageHint = property.imageUrls && property.imageUrls.length > 0
-    ? 'user uploaded'
-    : 'modern apartment';
-
   return (
     <div className="relative min-h-screen pb-28">
       <div className="relative h-72 w-full sm:h-96">
@@ -79,7 +123,6 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
           fill
           className="object-cover"
           priority
-          data-ai-hint={imageHint}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
@@ -133,11 +176,16 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/90 p-4 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-center gap-4">
-          <Button variant="default" className="w-full">
-            Chat with Agent
+        <div className="container mx-auto flex items-center justify-center gap-4 max-w-2xl">
+          <Button 
+            onClick={handleStartChat} 
+            disabled={isStartingChat || user?.uid === property.landlordId}
+            variant="default" 
+            className="w-full h-12 text-lg font-semibold shadow-lg"
+          >
+            {isStartingChat ? 'Connecting...' : user?.uid === property.landlordId ? 'Your Listing' : 'Chat with Agent'}
           </Button>
-          <Button variant="accent" className="w-full">
+          <Button variant="accent" className="w-full h-12 text-lg font-semibold shadow-lg">
             Rent Now
           </Button>
         </div>

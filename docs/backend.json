@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -27,7 +28,7 @@
       "properties": {
         "landlordId": {
           "type": "string",
-          "description": "Reference to the User who owns this property. (Relationship: User 1:N Property)"
+          "description": "Reference to the User who owns this property."
         },
         "title": {
           "type": "string",
@@ -45,19 +46,13 @@
           "type": "string",
           "description": "A detailed description of the property."
         },
-        "amenities": {
-          "type": "array",
-          "description": "A list of amenities offered by the property.",
-          "items": {
-            "type": "string"
-          }
+        "type": {
+          "type": "string",
+          "enum": ["Flat", "Duplex", "Short-let", "Self-con", "Penthouse"]
         },
         "imageUrls": {
           "type": "array",
-          "description": "Array of URLs pointing to images of the property",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         }
       },
       "required": [
@@ -67,6 +62,49 @@
         "price",
         "description"
       ]
+    },
+    "Chat": {
+      "title": "Chat",
+      "type": "object",
+      "description": "Represents a conversation between a tenant and a landlord.",
+      "properties": {
+        "participants": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Array of user UIDs involved in the chat."
+        },
+        "propertyId": {
+          "type": "string",
+          "description": "The ID of the property this chat is regarding."
+        },
+        "propertyTitle": {
+          "type": "string"
+        },
+        "lastMessage": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "A single message within a chat.",
+      "properties": {
+        "senderId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     }
   },
   "auth": {
@@ -79,13 +117,25 @@
       "schema": {
         "$ref": "#/entities/User"
       },
-      "description": "Stores user profiles, including their role (landlord or tenant). The document ID is the Firebase Auth UID."
+      "description": "Stores user profiles."
     },
     "/properties/{propertyId}": {
       "schema": {
         "$ref": "#/entities/Property"
       },
-      "description": "Stores property listings. Includes denormalized 'landlordId' for authorization independence."
+      "description": "Stores property listings."
+    },
+    "/chats/{chatId}": {
+      "schema": {
+        "$ref": "#/entities/Chat"
+      },
+      "description": "Stores conversation metadata."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/Message"
+      },
+      "description": "Stores individual messages within a conversation."
     }
   }
 }
