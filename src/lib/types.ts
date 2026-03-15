@@ -1,4 +1,3 @@
-
 import type { FieldValue } from 'firebase/firestore';
 
 export type Amenity = 'wifi' | 'power' | 'security';
@@ -42,4 +41,10 @@ export interface Message {
   senderId: string;
   text: string;
   createdAt: FieldValue;
+}
+
+export interface Favorite {
+  id: string;
+  propertyId: string;
+  savedAt: FieldValue;
 }

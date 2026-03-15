@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -94,6 +93,11 @@ function AuthActions() {
 
   return (
     <div className="flex items-center gap-1 sm:gap-2">
+      <Button asChild variant="ghost" size="icon" title="Saved Properties">
+        <Link href="/favorites">
+          <Heart className="h-5 w-5 text-primary" />
+        </Link>
+      </Button>
       {userProfile?.role === 'landlord' && (
         <>
           <Button asChild variant="ghost" size="icon" className="hidden sm:flex" title="My Listings">

@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -130,6 +129,15 @@
           "format": "date-time"
         }
       }
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "type": "object",
+      "description": "A saved property reference for a specific user.",
+      "properties": {
+        "propertyId": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -143,6 +151,12 @@
         "$ref": "#/entities/User"
       },
       "description": "Stores user profiles."
+    },
+    "/users/{userId}/favorites/{propertyId}": {
+      "schema": {
+        "$ref": "#/entities/Favorite"
+      },
+      "description": "Stores a user's favorited properties."
     },
     "/properties/{propertyId}": {
       "schema": {
