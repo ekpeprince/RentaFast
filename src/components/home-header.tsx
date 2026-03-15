@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -102,6 +103,14 @@ function AuthActions() {
         </Link>
       </Button>
       
+      {userProfile?.role === 'tenant' && (
+        <Button asChild variant="ghost" size="icon" title="AI Home Matcher" className="text-accent hover:bg-accent/10">
+          <Link href="/matches">
+            <Sparkles className="h-5 w-5" />
+          </Link>
+        </Button>
+      )}
+
       {userProfile?.role === 'admin' && (
         <Button asChild variant="ghost" size="icon" title="Admin Portal" className="text-accent hover:bg-accent/10">
           <Link href="/admin">

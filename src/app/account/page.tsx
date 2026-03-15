@@ -15,7 +15,7 @@ import { doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, LogOut, Loader2, Save, FileUp, ExternalLink, Clock, XCircle, Briefcase, MapPin, User as UserIcon } from 'lucide-react';
+import { ShieldCheck, LogOut, Loader2, Save, FileUp, ExternalLink, Clock, XCircle, Briefcase, MapPin, User as UserIcon, Sparkles } from 'lucide-react';
 import type { UserProfile } from '@/lib/types';
 
 export default function AccountPage() {
@@ -29,6 +29,7 @@ export default function AccountPage() {
   const [occupation, setOccupation] = useState('');
   const [residentCity, setResidentCity] = useState('');
   const [aboutMe, setAboutMe] = useState('');
+  const [preferences, setPreferences] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -52,6 +53,7 @@ export default function AccountPage() {
       setOccupation(profile.occupation || '');
       setResidentCity(profile.residentCity || '');
       setAboutMe(profile.aboutMe || '');
+      setPreferences(profile.preferences || '');
     }
   }, [profile]);
 
@@ -75,6 +77,7 @@ export default function AccountPage() {
       occupation,
       residentCity,
       aboutMe,
+      preferences,
     });
 
     toast({
@@ -225,7 +228,7 @@ export default function AccountPage() {
                     id="residentCity" 
                     value={residentCity} 
                     onChange={(e) => setResidentCity(e.target.value)} 
-                    placeholder="e.g., Lagos" 
+                    placeholder="e.g., Calabar" 
                   />
                 </div>
               </div>
@@ -239,14 +242,32 @@ export default function AccountPage() {
                   value={aboutMe} 
                   onChange={(e) => setAboutMe(e.target.value)} 
                   placeholder="Share a bit about yourself, your lifestyle, or what makes you a great tenant..."
-                  className="min-h-[120px]"
+                  className="min-h-[100px]"
                 />
               </div>
+
+              {profile.role === 'tenant' && (
+                <div className="space-y-2 pt-4 border-t">
+                  <Label htmlFor="preferences" className="flex items-center gap-2 text-accent">
+                    <Sparkles className="h-4 w-4" /> AI Home Wishlist
+                  </Label>
+                  <CardDescription className="mb-2">
+                    Describe your dream home (budget, specific area, features). Our AI will use this to find matches for you.
+                  </CardDescription>
+                  <Textarea 
+                    id="preferences" 
+                    value={preferences} 
+                    onChange={(e) => setPreferences(e.target.value)} 
+                    placeholder="e.g., I'm looking for a quiet flat in MCC area, Calabar. I need at least 2 bedrooms, good security, and it should be within 1.2 million Naira per year."
+                    className="min-h-[100px] border-accent/20"
+                  />
+                </div>
+              )}
             </CardContent>
             <CardFooter className="flex justify-between border-t p-6">
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Save Resume
+                Save Profile
               </Button>
             </CardFooter>
           </form>

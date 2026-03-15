@@ -15,6 +15,7 @@ export interface UserProfile {
   aboutMe?: string;
   occupation?: string;
   residentCity?: string;
+  preferences?: string;
 }
 
 export interface Property {

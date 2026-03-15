@@ -52,6 +52,10 @@
         "residentCity": {
           "type": "string",
           "description": "The city where the user currently resides."
+        },
+        "preferences": {
+          "type": "string",
+          "description": "A plain-English description of the tenant's ideal home requirements."
         }
       },
       "required": [
