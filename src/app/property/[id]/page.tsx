@@ -1,4 +1,3 @@
-
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
@@ -13,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Badge } from '@/components/ui/badge';
 import AmenityIcon from '@/components/amenity-icon';
+import RentNowDialog from '@/components/rent-now-dialog';
 import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
@@ -120,6 +120,8 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
   const propertyImages = property.imageUrls && property.imageUrls.length > 0 
     ? property.imageUrls 
     : [(PlaceHolderImages.find((img) => img.id === 'lekki-apartment') || PlaceHolderImages[0]).imageUrl];
+
+  const isOwner = user?.uid === property.landlordId;
 
   return (
     <div className="relative min-h-screen pb-28 bg-muted/5">
@@ -245,7 +247,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                     className="w-full h-12 text-lg font-bold" 
                     variant="default"
                     onClick={handleStartChat}
-                    disabled={isStartingChat || user?.uid === property.landlordId}
+                    disabled={isStartingChat || isOwner}
                   >
                     {isStartingChat ? 'Connecting...' : 'Message Agent'}
                   </Button>
@@ -282,15 +284,27 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
           <div className="flex gap-4 w-full sm:w-auto">
             <Button 
               onClick={handleStartChat} 
-              disabled={isStartingChat || user?.uid === property.landlordId}
+              disabled={isStartingChat || isOwner}
               variant="outline" 
               className="flex-1 sm:px-8 h-12 text-lg font-bold border-2"
             >
-              {isStartingChat ? 'Connecting...' : user?.uid === property.landlordId ? 'Your Listing' : 'Message Agent'}
+              {isStartingChat ? 'Connecting...' : isOwner ? 'Your Listing' : 'Message Agent'}
             </Button>
-            <Button variant="accent" className="flex-1 sm:px-8 h-12 text-lg font-bold shadow-lg">
-              Rent Now
-            </Button>
+            
+            {!isOwner ? (
+              <RentNowDialog 
+                property={property}
+                trigger={
+                  <Button variant="accent" className="flex-1 sm:px-8 h-12 text-lg font-bold shadow-lg">
+                    Rent Now
+                  </Button>
+                }
+              />
+            ) : (
+              <Button variant="accent" className="flex-1 sm:px-8 h-12 text-lg font-bold shadow-lg" disabled>
+                Your Listing
+              </Button>
+            )}
           </div>
         </div>
       </div>
