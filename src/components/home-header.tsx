@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -26,9 +25,9 @@ function UserGreeting() {
 
   if (!user) {
     return (
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Welcome to RentaFast</h1>
-        <p className="text-muted-foreground">Let's find your new home.</p>
+      <div className="flex flex-col">
+        <h1 className="text-2xl font-black text-primary leading-none">RentaFast</h1>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">Cross River Marketplace</p>
       </div>
     );
   }
@@ -47,14 +46,14 @@ function UserGreeting() {
   return (
     <div className="flex items-center gap-4">
       <Link href="/account">
-        <Avatar className="h-12 w-12 cursor-pointer border-2 border-primary/10">
+        <Avatar className="h-10 w-10 cursor-pointer border-2 border-primary/10 transition-transform hover:scale-105">
           <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
-          <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+          <AvatarFallback className="bg-secondary text-primary font-bold">{getInitials(displayName)}</AvatarFallback>
         </Avatar>
       </Link>
-      <div className="hidden sm:block">
-        <h1 className="text-xl font-bold text-primary">Hello, {displayName} 👋</h1>
-        <p className="text-sm text-muted-foreground">Find your next home.</p>
+      <div className="hidden md:block">
+        <h1 className="text-lg font-black text-primary leading-tight">Hello, {displayName.split(' ')[0]} 👋</h1>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Find your next home</p>
       </div>
     </div>
   );
@@ -82,10 +81,13 @@ function AuthActions() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Button asChild variant="outline">
+        <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
+          <Link href="/guides">Vibe Guides</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
           <Link href="/login">Log In</Link>
         </Button>
-        <Button asChild>
+        <Button asChild size="sm" className="bg-primary hover:bg-primary/90">
           <Link href="/signup">Sign Up</Link>
         </Button>
       </div>
@@ -94,44 +96,49 @@ function AuthActions() {
 
   return (
     <div className="flex items-center gap-1 sm:gap-2">
+      <Button asChild variant="ghost" size="icon" title="Neighborhood Vibe Guides" className="text-accent hover:bg-accent/10">
+        <Link href="/guides">
+          <MapIcon className="h-5 w-5" />
+        </Link>
+      </Button>
+      
       {userProfile?.role === 'admin' && (
-        <Button asChild variant="ghost" size="icon" title="Admin Portal" className="text-accent">
+        <Button asChild variant="ghost" size="icon" title="Admin Portal" className="text-accent hover:bg-accent/10">
           <Link href="/admin">
             <ShieldCheck className="h-5 w-5" />
           </Link>
         </Button>
       )}
-      <Button asChild variant="ghost" size="icon" title="Saved Properties">
+
+      <Button asChild variant="ghost" size="icon" title="Saved Properties" className="hover:bg-primary/5">
         <Link href="/favorites">
           <Heart className="h-5 w-5 text-primary" />
         </Link>
       </Button>
+
       {(userProfile?.role === 'landlord' || userProfile?.role === 'admin') && (
         <>
-          <Button asChild variant="ghost" size="icon" title="Leads Dashboard">
+          <Button asChild variant="ghost" size="icon" title="Leads Dashboard" className="hover:bg-primary/5">
             <Link href="/leads">
               <ClipboardList className="h-5 w-5 text-primary" />
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="icon" className="hidden sm:flex" title="My Listings">
-            <Link href="/my-listings">
-              <LayoutDashboard className="h-5 w-5 text-primary" />
-            </Link>
-          </Button>
-          <Button asChild variant="accent" size="sm" className="hidden sm:flex">
+          <Button asChild variant="accent" size="sm" className="hidden sm:flex font-bold shadow-sm">
             <Link href="/new-listing">
               <PlusCircle className="mr-2 h-4 w-4" />
-              List
+              List Home
             </Link>
           </Button>
         </>
       )}
-      <Button asChild variant="ghost" size="icon" title="Messages">
+
+      <Button asChild variant="ghost" size="icon" title="Messages" className="hover:bg-primary/5">
         <Link href="/messages">
           <MessageSquare className="h-5 w-5 text-primary" />
         </Link>
       </Button>
-      <Button variant="ghost" size="icon" className="relative">
+
+      <Button variant="ghost" size="icon" className="relative hover:bg-primary/5">
         <Bell className="h-5 w-5 text-primary" />
         <span className="absolute top-2 right-2 flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
@@ -144,7 +151,7 @@ function AuthActions() {
 
 export default function HomeHeader() {
   return (
-    <header className="flex items-center justify-between gap-4 py-2">
+    <header className="flex items-center justify-between gap-4 py-4 border-b mb-6">
       <UserGreeting />
       <AuthActions />
     </header>
