@@ -1,4 +1,3 @@
-
 import type { FieldValue } from 'firebase/firestore';
 
 export type Amenity = 'wifi' | 'power' | 'security';
