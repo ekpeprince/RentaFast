@@ -1,18 +1,28 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles } from 'lucide-react';
-import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles, LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { useUser, useDoc, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { UserProfile } from '@/lib/types';
 
 function UserGreeting() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
+  const router = useRouter();
 
   const profileRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
@@ -21,7 +31,7 @@ function UserGreeting() {
   const { data: profile } = useDoc<UserProfile>(profileRef);
 
   if (isUserLoading) {
-    return <Skeleton className="h-8 w-48" />;
+    return <Skeleton className="h-10 w-40" />;
   }
 
   if (!user) {
@@ -32,6 +42,15 @@ function UserGreeting() {
       </div>
     );
   }
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -46,12 +65,43 @@ function UserGreeting() {
 
   return (
     <div className="flex items-center gap-4">
-      <Link href="/account">
-        <Avatar className="h-10 w-10 cursor-pointer border-2 border-primary/10 transition-transform hover:scale-105">
-          <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
-          <AvatarFallback className="bg-secondary text-primary font-bold">{getInitials(displayName)}</AvatarFallback>
-        </Avatar>
-      </Link>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Avatar className="h-10 w-10 cursor-pointer border-2 border-primary/10 transition-transform hover:scale-105">
+            <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
+            <AvatarFallback className="bg-secondary text-primary font-bold">{getInitials(displayName)}</AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuLabel>
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/account" className="flex items-center cursor-pointer">
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile Settings</span>
+            </Link>
+          </DropdownMenuItem>
+          {profile?.role === 'landlord' && (
+            <DropdownMenuItem asChild>
+              <Link href="/my-listings" className="flex items-center cursor-pointer">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>My Listings</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive cursor-pointer">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sign Out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      
       <div className="hidden md:block">
         <h1 className="text-lg font-black text-primary leading-tight">Hello, {displayName.split(' ')[0]} 👋</h1>
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Find your next home</p>
