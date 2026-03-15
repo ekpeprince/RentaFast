@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -60,7 +60,12 @@ function AuthActions() {
   const { data: userProfile } = useDoc<{ role: 'landlord' | 'tenant' }>(userProfileRef);
 
   if (isUserLoading) {
-    return <Skeleton className="h-10 w-24" />;
+    return (
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-10 w-24" />
+        <Skeleton className="h-10 w-10 rounded-full" />
+      </div>
+    );
   }
 
   if (!user) {
@@ -79,12 +84,20 @@ function AuthActions() {
   return (
     <div className="flex items-center gap-2">
       {userProfile?.role === 'landlord' && (
-        <Button asChild variant="accent">
-          <Link href="/new-listing">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            List a Property
-          </Link>
-        </Button>
+        <>
+          <Button asChild variant="outline" className="hidden sm:flex">
+            <Link href="/my-listings">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              My Listings
+            </Link>
+          </Button>
+          <Button asChild variant="accent">
+            <Link href="/new-listing">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              List Property
+            </Link>
+          </Button>
+        </>
       )}
       <Button variant="ghost" size="icon" className="relative">
         <Bell className="h-6 w-6 text-primary" />
@@ -100,7 +113,7 @@ function AuthActions() {
 
 export default function HomeHeader() {
   return (
-    <header className="flex items-center justify-between">
+    <header className="flex items-center justify-between gap-4">
       <UserGreeting />
       <AuthActions />
     </header>
