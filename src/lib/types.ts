@@ -10,6 +10,8 @@ export interface UserProfile {
   phoneNumber?: string;
   photoURL?: string;
   isVerified?: boolean;
+  verificationDocUrl?: string;
+  verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
 }
 
 export interface Property {

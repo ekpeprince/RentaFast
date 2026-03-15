@@ -31,6 +31,15 @@
           "type": "boolean",
           "description": "Whether the user has been verified by RentaFast admins.",
           "default": false
+        },
+        "verificationDocUrl": {
+          "type": "string",
+          "description": "URL to the uploaded identity or property document."
+        },
+        "verificationStatus": {
+          "type": "string",
+          "enum": ["unverified", "pending", "verified", "rejected"],
+          "default": "unverified"
         }
       },
       "required": [
@@ -96,8 +105,7 @@
       "description": "Represents a conversation between a tenant and a landlord.",
       "properties": {
         "participants": {
-          "type": "array",
-          "items": { "type": "string" },
+          "array": { "type": "string" },
           "description": "Array of user UIDs involved in the chat."
         },
         "propertyId": {

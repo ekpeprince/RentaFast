@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ShieldAlert, UserCheck, UserX, Loader2, ArrowLeft, Search } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, UserCheck, UserX, Loader2, ArrowLeft, Search, ExternalLink, Check, X } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -52,17 +52,30 @@ export default function AdminPage() {
     }
   }, [user, isUserLoading, isProfileLoading, currentUserProfile, router, toast]);
 
-  const handleToggleVerification = (targetUser: UserProfile) => {
+  const handleVerify = (targetUser: UserProfile) => {
     if (!firestore) return;
-
     const userRef = doc(firestore, 'users', targetUser.id);
-    const newStatus = !targetUser.isVerified;
-
-    updateDocumentNonBlocking(userRef, { isVerified: newStatus });
-
+    updateDocumentNonBlocking(userRef, { 
+      isVerified: true, 
+      verificationStatus: 'verified' 
+    });
     toast({
-      title: newStatus ? 'User Verified' : 'Verification Revoked',
-      description: `${targetUser.displayName || targetUser.id} status updated.`,
+      title: 'Landlord Verified',
+      description: `${targetUser.displayName || targetUser.id} is now a verified agent.`,
+    });
+  };
+
+  const handleReject = (targetUser: UserProfile) => {
+    if (!firestore) return;
+    const userRef = doc(firestore, 'users', targetUser.id);
+    updateDocumentNonBlocking(userRef, { 
+      isVerified: false, 
+      verificationStatus: 'rejected' 
+    });
+    toast({
+      variant: 'destructive',
+      title: 'Verification Rejected',
+      description: `Rejected verification request for ${targetUser.displayName || targetUser.id}.`,
     });
   };
 
@@ -85,7 +98,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Button asChild variant="ghost" className="-ml-2 mb-2">
@@ -98,7 +111,7 @@ export default function AdminPage() {
             Admin Verification Portal
             <ShieldCheck className="h-8 w-8 text-accent" />
           </h1>
-          <p className="text-muted-foreground">Manage and verify landlord profiles to build marketplace trust.</p>
+          <p className="text-muted-foreground">Manage and verify landlord profiles to build marketplace trust in Cross River.</p>
         </div>
       </div>
 
@@ -106,7 +119,7 @@ export default function AdminPage() {
         <Card className="shadow-md">
           <CardHeader className="pb-3">
             <CardTitle>Landlord Registry</CardTitle>
-            <CardDescription>Search and manage verification status for all registered landlords.</CardDescription>
+            <CardDescription>Search and review verification documents from registered landlords.</CardDescription>
             <div className="relative mt-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
@@ -130,6 +143,7 @@ export default function AdminPage() {
                   <thead className="bg-muted text-muted-foreground text-sm font-medium">
                     <tr>
                       <th className="px-4 py-3">Landlord Name</th>
+                      <th className="px-4 py-3">Document</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -142,25 +156,57 @@ export default function AdminPage() {
                           <div className="text-xs text-muted-foreground font-mono">{targetUser.id}</div>
                         </td>
                         <td className="px-4 py-4">
+                          {targetUser.verificationDocUrl ? (
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={targetUser.verificationDocUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                View Doc
+                              </a>
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No doc uploaded</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
                           {targetUser.isVerified ? (
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-none flex w-fit items-center gap-1">
                               <UserCheck className="h-3 w-3" /> Verified
                             </Badge>
+                          ) : targetUser.verificationStatus === 'pending' ? (
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-none flex w-fit items-center gap-1">
+                              <Clock className="h-3 w-3" /> Pending
+                            </Badge>
+                          ) : targetUser.verificationStatus === 'rejected' ? (
+                            <Badge variant="destructive" className="flex w-fit items-center gap-1">
+                              <UserX className="h-3 w-3" /> Rejected
+                            </Badge>
                           ) : (
-                            <Badge variant="secondary" className="text-muted-foreground flex w-fit items-center gap-1">
-                              <UserX className="h-3 w-3" /> Unverified
+                            <Badge variant="outline" className="text-muted-foreground flex w-fit items-center gap-1">
+                              Unverified
                             </Badge>
                           )}
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <Button 
-                            variant={targetUser.isVerified ? "outline" : "default"} 
-                            size="sm"
-                            onClick={() => handleToggleVerification(targetUser)}
-                            className={targetUser.isVerified ? "border-destructive text-destructive hover:bg-destructive/10" : "bg-accent hover:bg-accent/90"}
-                          >
-                            {targetUser.isVerified ? 'Revoke' : 'Verify'}
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleReject(targetUser)}
+                              disabled={targetUser.verificationStatus === 'rejected'}
+                              className="text-destructive hover:bg-destructive/10"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              onClick={() => handleVerify(targetUser)}
+                              disabled={targetUser.isVerified}
+                              className="bg-accent hover:bg-accent/90"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
