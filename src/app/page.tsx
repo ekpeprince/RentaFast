@@ -6,142 +6,121 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Sparkles, ShieldCheck, ArrowRight, Building, Users, Zap, Search } from 'lucide-react';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'calabar-villa')?.imageUrl || '';
 
   return (
-    <main className="min-h-screen pb-20">
-      <div className="container mx-auto px-4 py-2 sm:px-6 lg:px-8">
+    <main className="h-screen flex flex-col overflow-hidden bg-background">
+      <div className="container mx-auto px-4 py-2 sm:px-6 lg:px-8 shrink-0">
         <HomeHeader />
       </div>
 
-      {/* Hero Section */}
-      <section className="relative h-[600px] w-full flex items-center justify-center overflow-hidden mb-16">
-        <Image 
-          src={heroImage} 
-          alt="Luxury home in Calabar" 
-          fill 
-          className="object-cover brightness-[0.4]"
-          priority
-          data-ai-hint="luxury villa"
-        />
-        <div className="container relative z-10 px-4 text-center text-white space-y-8">
-          <div className="space-y-4">
-            <Badge className="bg-accent text-white border-none px-4 py-1 text-sm font-bold uppercase tracking-widest animate-bounce">
+      <div className="flex-1 relative flex flex-col justify-center overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <Image 
+            src={heroImage} 
+            alt="Luxury home in Calabar" 
+            fill 
+            className="object-cover brightness-[0.3]"
+            priority
+            data-ai-hint="luxury villa"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background/80" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="container relative z-10 px-4 mx-auto text-center space-y-6">
+          <div className="space-y-3">
+            <Badge className="bg-accent text-white border-none px-4 py-1 text-xs font-bold uppercase tracking-widest animate-pulse">
               Now Live in Cross River
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none text-white">
               Rent Smarter in <br/><span className="text-accent">Cross River State</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto font-medium">
+            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto font-medium leading-relaxed">
               Find verified homes in Calabar, Ikom, and Ogoja with AI matching and local neighborhood vibe checks.
             </p>
           </div>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild size="lg" className="h-16 px-10 text-xl font-bold rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95">
+            <Button asChild size="lg" className="h-14 px-8 text-lg font-bold rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95">
               <Link href="/marketplace">
-                <Search className="mr-2 h-6 w-6" />
+                <Search className="mr-2 h-5 w-5" />
                 Browse Marketplace
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-16 px-10 text-xl font-bold rounded-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 hover:text-white transition-transform hover:scale-105 active:scale-95">
+            <Button asChild variant="outline" size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 hover:text-white transition-transform hover:scale-105 active:scale-95">
               <Link href="/guides">
                 Explore Neighborhoods
               </Link>
             </Button>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-8 text-sm font-bold">
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/20">
-               <ShieldCheck className="h-5 w-5 text-accent" /> 100% Verified Agents
+          {/* Quick Stats/Features */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/40 text-[10px] sm:text-xs font-bold text-white">
+               <ShieldCheck className="h-4 w-4 text-accent" /> 100% Verified
              </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/20">
-               <Zap className="h-5 w-5 text-accent" /> No Middleman Drama
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/40 text-[10px] sm:text-xs font-bold text-white">
+               <Zap className="h-4 w-4 text-accent" /> Direct Contact
              </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-black/20">
-               <Sparkles className="h-5 w-5 text-accent" /> AI Home Matcher
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-black/40 text-[10px] sm:text-xs font-bold text-white">
+               <Sparkles className="h-4 w-4 text-accent" /> AI Home Matcher
              </div>
           </div>
         </div>
-      </section>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
-        
-        {/* Value Props */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="group flex flex-col items-center text-center p-8 rounded-3xl bg-muted/30 border transition-all hover:shadow-xl hover:-translate-y-1">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
-              <MapPin className="h-8 w-8" />
-            </div>
-            <h3 className="text-2xl font-black mb-3 text-primary">Regional Guides</h3>
-            <p className="text-muted-foreground leading-relaxed">Moving to Calabar? Get an instant "Vibe Check" on any local neighborhood before you visit.</p>
-            <Button asChild variant="link" className="mt-4 text-accent font-bold text-lg">
-              <Link href="/guides">Check the Vibe <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-          </div>
-
-          <div className="group flex flex-col items-center text-center p-8 rounded-3xl bg-muted/30 border transition-all hover:shadow-xl hover:-translate-y-1">
-            <div className="h-16 w-16 rounded-2xl bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent group-hover:text-white transition-colors">
-              <Sparkles className="h-8 w-8" />
-            </div>
-            <h3 className="text-2xl font-black mb-3 text-primary">Smart AI Matcher</h3>
-            <p className="text-muted-foreground leading-relaxed">Tell RentaFast what you're looking for and let our AI find the perfect home in seconds.</p>
-            <Button asChild variant="link" className="mt-4 text-accent font-bold text-lg">
-              <Link href="/matches">Try Smart Match <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-          </div>
-
-          <div className="group flex flex-col items-center text-center p-8 rounded-3xl bg-muted/30 border transition-all hover:shadow-xl hover:-translate-y-1">
-            <div className="h-16 w-16 rounded-2xl bg-green-500/10 flex items-center justify-center mb-6 group-hover:bg-green-600 group-hover:text-white transition-colors">
-              <Users className="h-8 w-8" />
-            </div>
-            <h3 className="text-2xl font-black mb-3 text-primary">Direct Contact</h3>
-            <p className="text-muted-foreground leading-relaxed">Forget the stress. Chat directly with verified landlords and property managers across Cross River.</p>
-            <Button asChild variant="link" className="mt-4 text-accent font-bold text-lg">
-              <Link href="/marketplace">Start Searching <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-          </div>
-        </section>
-
-        {/* Call to Action for Landlords */}
-        <section className="relative rounded-[2.5rem] bg-primary overflow-hidden p-12 md:p-20 text-white">
-           <div className="absolute top-0 right-0 p-8 opacity-10">
-              <Building className="h-64 w-64" />
-           </div>
-           <div className="relative z-10 max-w-2xl">
-              <h2 className="text-4xl md:text-5xl font-black mb-6">List Your Property in Cross River</h2>
-              <p className="text-xl text-white/80 mb-10 leading-relaxed">
-                Reach thousands of verified tenants in Calabar, Ikom, and Ogoja. Use AI to write your descriptions and track your listing performance.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                 <Button asChild size="lg" variant="accent" className="h-14 px-8 text-lg font-bold rounded-xl shadow-lg">
-                    <Link href="/new-listing">List Your Home Now</Link>
-                 </Button>
-                 <Button asChild size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-xl border-white/20 hover:bg-white/10 hover:text-white">
-                    <Link href="/leads">View Your Leads</Link>
-                 </Button>
+        {/* Minimized Value Props (Footer-aligned) */}
+        <div className="container mx-auto px-4 mt-auto pb-8 relative z-10 hidden md:block">
+          <div className="grid grid-cols-3 gap-6">
+            <Link href="/guides" className="group p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all flex items-start gap-4">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-primary/20 flex items-center justify-center text-accent">
+                <MapPin className="h-5 w-5" />
               </div>
-           </div>
-        </section>
+              <div className="space-y-1">
+                <h3 className="text-sm font-black text-white">Vibe Guides</h3>
+                <p className="text-[11px] text-white/60 leading-tight">Get an instant vibe check on local neighborhoods.</p>
+              </div>
+            </Link>
 
-        {/* Footer info */}
-        <footer className="pt-12 border-t text-center space-y-4">
-           <h2 className="text-2xl font-black text-primary">RentaFast</h2>
-           <p className="text-muted-foreground max-w-md mx-auto">
-             Building the future of property rentals in Cross River State, Nigeria. One verified home at a time.
-           </p>
-           <div className="flex items-center justify-center gap-8 py-8">
-              <Link href="/marketplace" className="text-sm font-bold text-muted-foreground hover:text-primary">Marketplace</Link>
-              <Link href="/guides" className="text-sm font-bold text-muted-foreground hover:text-primary">Vibe Guides</Link>
-              <Link href="/matches" className="text-sm font-bold text-muted-foreground hover:text-primary">Smart Matches</Link>
-           </div>
-           <p className="text-xs text-muted-foreground/50 pb-8">© 2024 RentaFast. All rights reserved.</p>
-        </footer>
+            <Link href="/matches" className="group p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all flex items-start gap-4">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-black text-white">Smart Matcher</h3>
+                <p className="text-[11px] text-white/60 leading-tight">AI finds the perfect home based on your needs.</p>
+              </div>
+            </Link>
+
+            <Link href="/new-listing" className="group p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all flex items-start gap-4">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-green-500/20 flex items-center justify-center text-green-400">
+                <Building className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-black text-white">List Property</h3>
+                <p className="text-[11px] text-white/60 leading-tight">Reach verified tenants in Calabar & Ikom.</p>
+              </div>
+            </Link>
+          </div>
+        </div>
       </div>
+
+      {/* Ultra-compact Footer */}
+      <footer className="py-3 border-t bg-background shrink-0 text-center">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          <p className="text-[10px] font-black text-primary uppercase tracking-widest">RentaFast Cross River</p>
+          <div className="flex gap-4 text-[10px] font-bold text-muted-foreground/60 uppercase">
+             <span>Marketplace</span>
+             <span>Vibe Guides</span>
+             <span>Smart Match</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground/40">© 2024</p>
+        </div>
+      </footer>
     </main>
   );
 }
-
-import { Badge } from '@/components/ui/badge';
