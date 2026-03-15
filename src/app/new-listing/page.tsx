@@ -5,28 +5,31 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Sparkles, Loader2, ArrowLeft } from 'lucide-react';
 import { useFirebase, useUser } from '@/firebase';
 import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { generateListingDescription } from '@/ai/flows/generate-listing-description';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const listingSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   location: z.string().min(3, 'Location is required'),
-  price: z.coerce.number().min(1, 'Price must be a positive number'),
+  price: z.preprocess((val) => Number(val), z.number().min(1, 'Price must be a positive number')),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   type: z.enum(['Flat', 'Duplex', 'Short-let', 'Self-con', 'Penthouse']),
-  beds: z.coerce.number().int().min(1, 'Must have at least one bed'),
-  baths: z.coerce.number().int().min(1, 'Must have at least one bath'),
-  images: z.any().refine((files) => files && files.length > 0, 'At least one image is required.'),
+  beds: z.preprocess((val) => Number(val), z.number().int().min(1)),
+  baths: z.preprocess((val) => Number(val), z.number().int().min(1)),
+  images: z.any().refine((files) => files instanceof FileList && files.length > 0, 'At least one image is required.'),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
@@ -37,6 +40,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   useEffect(() => {
@@ -58,6 +62,46 @@ export default function NewListingPage() {
     },
   });
 
+  const handleAiGenerate = async () => {
+    const values = form.getValues();
+    
+    // Basic validation check before calling AI
+    if (!values.title || !values.location || !values.type) {
+      toast({
+        title: "Missing info",
+        description: "Please fill in the title, location, and property type first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAiLoading(true);
+    try {
+      const result = await generateListingDescription({
+        title: values.title,
+        type: values.type,
+        beds: Number(values.beds),
+        baths: Number(values.baths),
+        location: values.location,
+        keyFeatures: values.description, // Use existing text as context
+      });
+      
+      form.setValue('description', result.description, { shouldValidate: true });
+      toast({
+        title: "AI Description Generated",
+        description: "We've crafted a professional description for you.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'AI Generation Failed',
+        description: error.message || 'Could not generate description.',
+      });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const onSubmit = async (values: ListingFormValues) => {
     if (!user || !firestore || !firebaseApp) {
       toast({
@@ -75,7 +119,11 @@ export default function NewListingPage() {
       const imageFiles = Array.from(values.images as FileList);
       
       const imagePromises = imageFiles.map(file => {
-        const imageRef = ref(storage, `properties/${user.uid}/${Date.now()}-${file.name}`);
+        // Sanitize filename to avoid path errors
+        const fileExtension = file.name.split('.').pop();
+        const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExtension}`;
+        const imageRef = ref(storage, `properties/${user.uid}/${cleanName}`);
+        
         return uploadBytes(imageRef, file)
           .then(snapshot => getDownloadURL(snapshot.ref));
       });
@@ -86,11 +134,11 @@ export default function NewListingPage() {
         landlordId: user.uid,
         title: values.title,
         location: values.location,
-        price: values.price,
+        price: Number(values.price),
         description: values.description,
         type: values.type,
-        beds: values.beds,
-        baths: values.baths,
+        beds: Number(values.beds),
+        baths: Number(values.baths),
         imageUrls,
         amenities: [],
         period: 'yr',
@@ -104,31 +152,41 @@ export default function NewListingPage() {
         description: 'Your property has been listed successfully.',
       });
       
-      setIsLoading(false); 
       router.push('/');
-        
     } catch (error: any) {
       console.error("Listing Submission Error:", error); 
-      
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
-        description: error.message || 'Could not create listing. Please try again.',
+        description: error.message || 'Could not create listing.',
       });
-      
+    } finally {
       setIsLoading(false); 
     }
   };
 
   if (isUserLoading || !user) {
-    return <div className="p-8 text-center">Loading...</div>;
+    return <div className="p-8 text-center flex flex-col items-center gap-4">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p>Verifying credentials...</p>
+    </div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto mb-6">
+        <Button asChild variant="ghost" className="-ml-2">
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
+        </Button>
+      </div>
+
+      <Card className="max-w-2xl mx-auto border-t-4 border-t-accent">
         <CardHeader>
-          <CardTitle>Create a New Listing</CardTitle>
+          <CardTitle className="text-2xl text-primary">List Your Property</CardTitle>
+          <CardDescription>Fill in the details below to showcase your property to thousands of tenants.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -140,7 +198,7 @@ export default function NewListingPage() {
                   <FormItem>
                     <FormLabel>Property Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Cozy 2 Bedroom Apartment" {...field} />
+                      <Input placeholder="e.g., Luxury 3 Bedroom Apartment" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,7 +219,7 @@ export default function NewListingPage() {
                         {...rest}
                         onChange={(e) => {
                           const files = e.target.files;
-                          if (files) {
+                          if (files && files.length > 0) {
                             onChange(files);
                             const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
                             setImagePreviews(newPreviews);
@@ -172,7 +230,7 @@ export default function NewListingPage() {
                     <div className="grid grid-cols-3 gap-4 mt-4">
                       {imagePreviews.map((src, index) => (
                         <div key={index} className="relative aspect-square">
-                            <Image src={src} alt={`Preview ${index + 1}`} fill className="rounded-md object-cover" />
+                            <Image src={src} alt={`Preview ${index + 1}`} fill className="rounded-md object-cover shadow-sm" />
                         </div>
                       ))}
                     </div>
@@ -181,33 +239,35 @@ export default function NewListingPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Lekki, Lagos" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Lekki Phase 1, Lagos" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price (per year)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 3500000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (per year)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 3500000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -268,17 +328,35 @@ export default function NewListingPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Description</FormLabel>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-accent hover:text-accent/80 flex items-center gap-1"
+                        onClick={handleAiGenerate}
+                        disabled={isAiLoading}
+                      >
+                        {isAiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        {isAiLoading ? 'Writing...' : 'Magic Write'}
+                      </Button>
+                    </div>
                     <FormControl>
-                      <Textarea placeholder="Describe the property..." {...field} />
+                      <Textarea 
+                        placeholder="Describe the property or click 'Magic Write' to generate one..." 
+                        className="min-h-[120px]"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? 'Creating...' : 'Create Listing'}
+              <Button type="submit" disabled={isLoading} className="w-full h-12 text-lg">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isLoading ? 'Processing...' : 'Create Listing'}
               </Button>
             </form>
           </Form>
