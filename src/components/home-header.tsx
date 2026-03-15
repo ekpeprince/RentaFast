@@ -61,21 +61,26 @@ function UserGreeting() {
     return name[0];
   };
 
-  const displayName = profile?.displayName || user.displayName || 'User';
+  // Improved name resolution logic
+  const emailPrefix = user.email?.split('@')[0] || 'User';
+  const rawDisplayName = profile?.displayName || user.displayName || emailPrefix;
+  // Clean up the display name for the greeting (capitalize and take the first word)
+  const greetingName = rawDisplayName.split(' ')[0];
+  const capitalizedGreetingName = greetingName.charAt(0).toUpperCase() + greetingName.slice(1);
 
   return (
     <div className="flex items-center gap-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Avatar className="h-10 w-10 cursor-pointer border-2 border-primary/10 transition-transform hover:scale-105">
-            <AvatarImage src={user.photoURL ?? ''} alt={displayName} />
-            <AvatarFallback className="bg-secondary text-primary font-bold">{getInitials(displayName)}</AvatarFallback>
+            <AvatarImage src={user.photoURL ?? ''} alt={rawDisplayName} />
+            <AvatarFallback className="bg-secondary text-primary font-bold">{getInitials(rawDisplayName)}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{displayName}</p>
+              <p className="text-sm font-medium leading-none">{rawDisplayName}</p>
               <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
             </div>
           </DropdownMenuLabel>
@@ -103,7 +108,7 @@ function UserGreeting() {
       </DropdownMenu>
       
       <div className="hidden md:block">
-        <h1 className="text-lg font-black text-primary leading-tight">Hello, {displayName.split(' ')[0]} 👋</h1>
+        <h1 className="text-lg font-black text-primary leading-tight">Hello, {capitalizedGreetingName} 👋</h1>
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cross River Home Hunter</p>
       </div>
     </div>
