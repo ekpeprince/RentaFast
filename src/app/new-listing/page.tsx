@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,12 +32,18 @@ const listingSchema = z.object({
 type ListingFormValues = z.infer<typeof listingSchema>;
 
 export default function NewListingPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const { firestore, firebaseApp } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
@@ -65,7 +71,6 @@ export default function NewListingPage() {
     setIsLoading(true);
 
     try {
-      // 1. Image Upload Logic
       const storage = getStorage(firebaseApp);
       const imageFiles = Array.from(values.images as FileList);
       
@@ -77,7 +82,6 @@ export default function NewListingPage() {
       
       const imageUrls = await Promise.all(imagePromises);
 
-      // 2. Firestore Write Logic
       const newListingData = {
         landlordId: user.uid,
         title: values.title,
@@ -95,18 +99,15 @@ export default function NewListingPage() {
       
       await addDoc(collection(firestore, "properties"), newListingData);
 
-      // --- SUCCESS PATH ---
       toast({
         title: 'Success!',
         description: 'Your property has been listed successfully.',
       });
       
-      // Cleanup loading state before redirect
       setIsLoading(false); 
       router.push('/');
         
     } catch (error: any) {
-      // --- FAILURE PATH ---
       console.error("Listing Submission Error:", error); 
       
       toast({
@@ -115,14 +116,12 @@ export default function NewListingPage() {
         description: error.message || 'Could not create listing. Please try again.',
       });
       
-      // Cleanup loading state on failure
       setIsLoading(false); 
     }
   };
 
-  if (!user) {
-    router.push('/login');
-    return null;
+  if (isUserLoading || !user) {
+    return <div className="p-8 text-center">Loading...</div>;
   }
 
   return (

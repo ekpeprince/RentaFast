@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -11,6 +12,12 @@ export default function AccountPage() {
   const auth = useAuth();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const handleSignOut = async () => {
     if (auth) {
       await auth.signOut();
@@ -19,11 +26,10 @@ export default function AccountPage() {
   };
 
   if (isUserLoading) {
-    return <div>Loading...</div>;
+    return <div className="p-8 text-center">Loading...</div>;
   }
 
   if (!user) {
-    router.push('/login');
     return null;
   }
 
