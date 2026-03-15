@@ -26,7 +26,7 @@ const listingSchema = z.object({
   type: z.enum(['Flat', 'Duplex', 'Short-let', 'Self-con', 'Penthouse']),
   beds: z.coerce.number().int().min(1, 'Must have at least one bed'),
   baths: z.coerce.number().int().min(1, 'Must have at least one bath'),
-  images: z.any().refine((files) => files?.length > 0, 'At least one image is required.'),
+  images: z.any().refine((files) => files && files.length > 0, 'At least one image is required.'),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
@@ -65,56 +65,56 @@ export default function NewListingPage() {
     setIsLoading(true);
 
     try {
-        // 1. Image Upload Logic
-        const storage = getStorage(firebaseApp);
-        const imageFiles = Array.from(values.images as FileList);
-        
-        const imagePromises = imageFiles.map(file => {
-            const imageRef = ref(storage, `properties/${user.uid}/${Date.now()}-${file.name}`);
-            return uploadBytes(imageRef, file)
-                .then(snapshot => getDownloadURL(snapshot.ref));
-        });
-        
-        const imageUrls = await Promise.all(imagePromises);
+      // 1. Image Upload Logic
+      const storage = getStorage(firebaseApp);
+      const imageFiles = Array.from(values.images as FileList);
+      
+      const imagePromises = imageFiles.map(file => {
+        const imageRef = ref(storage, `properties/${user.uid}/${Date.now()}-${file.name}`);
+        return uploadBytes(imageRef, file)
+          .then(snapshot => getDownloadURL(snapshot.ref));
+      });
+      
+      const imageUrls = await Promise.all(imagePromises);
 
-        // 2. Firestore Write Logic
-        const newListingData = {
-            landlordId: user.uid,
-            title: values.title,
-            location: values.location,
-            price: values.price,
-            description: values.description,
-            type: values.type,
-            beds: values.beds,
-            baths: values.baths,
-            imageUrls,
-            amenities: [],
-            period: 'yr',
-            createdAt: serverTimestamp(),
-        };
-        
-        await addDoc(collection(firestore, "properties"), newListingData);
+      // 2. Firestore Write Logic
+      const newListingData = {
+        landlordId: user.uid,
+        title: values.title,
+        location: values.location,
+        price: values.price,
+        description: values.description,
+        type: values.type,
+        beds: values.beds,
+        baths: values.baths,
+        imageUrls,
+        amenities: [],
+        period: 'yr',
+        createdAt: serverTimestamp(),
+      };
+      
+      await addDoc(collection(firestore, "properties"), newListingData);
 
-        // --- SUCCESS PATH ---
-        toast({
-            title: 'Success!',
-            description: 'Your property has been listed successfully.',
-        });
-        
-        setIsLoading(false); 
-        router.push('/');
+      // --- SUCCESS PATH ---
+      toast({
+        title: 'Success!',
+        description: 'Your property has been listed successfully.',
+      });
+      
+      setIsLoading(false); 
+      router.push('/');
         
     } catch (error: any) {
-        // --- FAILURE PATH ---
-        console.error("Listing Submission Error:", error); 
-        
-        toast({
-            variant: 'destructive',
-            title: 'Uh oh! Something went wrong.',
-            description: error.message || 'Could not create listing. Please try again.',
-        });
-        
-        setIsLoading(false); 
+      // --- FAILURE PATH ---
+      console.error("Listing Submission Error:", error); 
+      
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description: error.message || 'Could not create listing. Please try again.',
+      });
+      
+      setIsLoading(false); 
     }
   };
 
