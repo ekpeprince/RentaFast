@@ -40,6 +40,18 @@
           "type": "string",
           "enum": ["unverified", "pending", "verified", "rejected"],
           "default": "unverified"
+        },
+        "aboutMe": {
+          "type": "string",
+          "description": "A short bio or 'Renter Resume' description."
+        },
+        "occupation": {
+          "type": "string",
+          "description": "The user's current job or profession."
+        },
+        "residentCity": {
+          "type": "string",
+          "description": "The city where the user currently resides."
         }
       },
       "required": [

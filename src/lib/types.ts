@@ -12,6 +12,9 @@ export interface UserProfile {
   isVerified?: boolean;
   verificationDocUrl?: string;
   verificationStatus?: 'unverified' | 'pending' | 'verified' | 'rejected';
+  aboutMe?: string;
+  occupation?: string;
+  residentCity?: string;
 }
 
 export interface Property {

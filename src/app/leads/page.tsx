@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, getDocs } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,11 +13,78 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClipboardList, MessageSquare, ArrowLeft, User, Calendar, Loader2, TrendingUp, Eye, Heart } from 'lucide-react';
+import { 
+  ClipboardList, 
+  MessageSquare, 
+  ArrowLeft, 
+  User, 
+  Calendar, 
+  Loader2, 
+  TrendingUp, 
+  Eye, 
+  Heart, 
+  Briefcase, 
+  MapPin, 
+  Info,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { Application, UserProfile, Property } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip } from 'recharts';
+
+function TenantResume({ tenantId }: { tenantId: string }) {
+  const firestore = useFirestore();
+  const tenantRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'users', tenantId) : null),
+    [firestore, tenantId]
+  );
+  const { data: profile, isLoading } = useDoc<UserProfile>(tenantRef);
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (isLoading) return <Skeleton className="h-4 w-32" />;
+  if (!profile) return null;
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full mt-3">
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 px-2 text-accent flex items-center gap-1.5 hover:text-accent hover:bg-accent/5">
+          <Info className="h-3.5 w-3.5" />
+          {isOpen ? 'Hide Renter Resume' : 'View Renter Resume'}
+          {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/50 border">
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Occupation</p>
+            <p className="text-sm font-semibold flex items-center gap-1.5">
+              <Briefcase className="h-3.5 w-3.5 text-primary" />
+              {profile.occupation || 'Not specified'}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current Location</p>
+            <p className="text-sm font-semibold flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              {profile.residentCity || 'Not specified'}
+            </p>
+          </div>
+          {profile.aboutMe && (
+            <div className="col-span-full space-y-1">
+              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">About the Tenant</p>
+              <p className="text-sm text-muted-foreground italic leading-relaxed">
+                "{profile.aboutMe}"
+              </p>
+            </div>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
 export default function LeadsPage() {
   const { user, isUserLoading } = useUser();
@@ -258,50 +325,55 @@ export default function LeadsPage() {
               <div className="grid gap-4">
                 {leads.map((lead) => (
                   <div key={lead.id} className="group p-4 rounded-xl border bg-card hover:bg-muted/30 transition-all shadow-sm">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-bold text-primary">{lead.tenantName}</h3>
-                          {getStatusBadge(lead.status)}
-                        </div>
-                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                          Interested in: <span className="text-foreground">{lead.propertyTitle}</span>
-                        </p>
-                        <div className="flex flex-wrap gap-4 pt-2">
-                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>Move-in: {lead.moveInDate}</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-primary">{lead.tenantName}</h3>
+                            {getStatusBadge(lead.status)}
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <User className="h-3.5 w-3.5" />
-                            <span>Occupants: {lead.occupants}</span>
+                          <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                            Interested in: <span className="text-foreground">{lead.propertyTitle}</span>
+                          </p>
+                          <div className="flex flex-wrap gap-4 pt-2">
+                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>Move-in: {lead.moveInDate}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <User className="h-3.5 w-3.5" />
+                              <span>Occupants: {lead.occupants}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <Select 
-                          value={lead.status} 
-                          onValueChange={(val: Application['status']) => handleUpdateStatus(lead.id, val)}
-                        >
-                          <SelectTrigger className="w-[180px] h-10">
-                            <SelectValue placeholder="Update Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Reviewing">Reviewing</SelectItem>
-                            <SelectItem value="Tour Scheduled">Tour Scheduled</SelectItem>
-                            <SelectItem value="Accepted">Accepted</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        <Button asChild variant="outline" size="icon" className="h-10 w-10" title="Open Chat">
-                          <Link href={`/messages`}>
-                            <MessageSquare className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Select 
+                            value={lead.status} 
+                            onValueChange={(val: Application['status']) => handleUpdateStatus(lead.id, val)}
+                          >
+                            <SelectTrigger className="w-[180px] h-10">
+                              <SelectValue placeholder="Update Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="Reviewing">Reviewing</SelectItem>
+                              <SelectItem value="Tour Scheduled">Tour Scheduled</SelectItem>
+                              <SelectItem value="Accepted">Accepted</SelectItem>
+                              <SelectItem value="Rejected">Rejected</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          
+                          <Button asChild variant="outline" size="icon" className="h-10 w-10" title="Open Chat">
+                            <Link href={`/messages`}>
+                              <MessageSquare className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
+                      
+                      {/* Integrated Renter Resume */}
+                      <TenantResume tenantId={lead.tenantId} />
                     </div>
                   </div>
                 ))}

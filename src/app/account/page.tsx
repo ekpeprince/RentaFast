@@ -2,19 +2,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { doc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, LogOut, Loader2, Save, FileUp, ExternalLink, Clock, XCircle } from 'lucide-react';
+import { ShieldCheck, LogOut, Loader2, Save, FileUp, ExternalLink, Clock, XCircle, Briefcase, MapPin, User as UserIcon } from 'lucide-react';
 import type { UserProfile } from '@/lib/types';
 
 export default function AccountPage() {
@@ -25,6 +26,9 @@ export default function AccountPage() {
 
   const [displayName, setDisplayName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [residentCity, setResidentCity] = useState('');
+  const [aboutMe, setAboutMe] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -45,6 +49,9 @@ export default function AccountPage() {
     if (profile) {
       setDisplayName(profile.displayName || '');
       setPhoneNumber(profile.phoneNumber || '');
+      setOccupation(profile.occupation || '');
+      setResidentCity(profile.residentCity || '');
+      setAboutMe(profile.aboutMe || '');
     }
   }, [profile]);
 
@@ -65,11 +72,14 @@ export default function AccountPage() {
     updateDocumentNonBlocking(userDocRef, {
       displayName,
       phoneNumber,
+      occupation,
+      residentCity,
+      aboutMe,
     });
 
     toast({
       title: 'Profile Updated',
-      description: 'Your changes have been saved successfully.',
+      description: 'Your Renter Resume has been saved.',
     });
     setIsSaving(false);
   };
@@ -163,43 +173,87 @@ export default function AccountPage() {
       </div>
 
       <div className="grid gap-6">
-        <Card>
+        <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Public Profile</CardTitle>
-            <CardDescription>This information will be visible to other users when you interact on the platform.</CardDescription>
+            <CardTitle>{profile.role === 'tenant' ? 'Renter Resume' : 'Public Profile'}</CardTitle>
+            <CardDescription>
+              {profile.role === 'tenant' 
+                ? 'Information provided here will be visible to landlords when you apply for a home.'
+                : 'This information will be visible to potential tenants.'}
+            </CardDescription>
           </CardHeader>
           <form onSubmit={handleUpdateProfile}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input 
-                  id="displayName" 
-                  value={displayName} 
-                  onChange={(e) => setDisplayName(e.target.value)} 
-                  placeholder="e.g., John Property Manager" 
-                />
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Full Name</Label>
+                  <Input 
+                    id="displayName" 
+                    value={displayName} 
+                    onChange={(e) => setDisplayName(e.target.value)} 
+                    placeholder="e.g., John Doe" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input 
+                    id="phone" 
+                    value={phoneNumber} 
+                    onChange={(e) => setPhoneNumber(e.target.value)} 
+                    placeholder="e.g., +234 800 000 0000" 
+                  />
+                </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="occupation" className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-muted-foreground" /> Occupation
+                  </Label>
+                  <Input 
+                    id="occupation" 
+                    value={occupation} 
+                    onChange={(e) => setOccupation(e.target.value)} 
+                    placeholder="e.g., Software Engineer" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="residentCity" className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" /> Current City
+                  </Label>
+                  <Input 
+                    id="residentCity" 
+                    value={residentCity} 
+                    onChange={(e) => setResidentCity(e.target.value)} 
+                    placeholder="e.g., Lagos" 
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  value={phoneNumber} 
-                  onChange={(e) => setPhoneNumber(e.target.value)} 
-                  placeholder="e.g., +234 800 000 0000" 
+                <Label htmlFor="aboutMe" className="flex items-center gap-2">
+                  <UserIcon className="h-4 w-4 text-muted-foreground" /> About Me / Bio
+                </Label>
+                <Textarea 
+                  id="aboutMe" 
+                  value={aboutMe} 
+                  onChange={(e) => setAboutMe(e.target.value)} 
+                  placeholder="Share a bit about yourself, your lifestyle, or what makes you a great tenant..."
+                  className="min-h-[120px]"
                 />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between border-t p-6">
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Save Changes
+                Save Resume
               </Button>
             </CardFooter>
           </form>
         </Card>
 
         {profile.role === 'landlord' && (
-          <Card className={profile.isVerified ? "border-accent/20 bg-accent/5" : ""}>
+          <Card className={profile.isVerified ? "border-accent/20 bg-accent/5 shadow-md" : "shadow-md"}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 Verification Documents
@@ -257,7 +311,7 @@ export default function AccountPage() {
           </Card>
         )}
 
-        <Card className="border-destructive/20 bg-destructive/5">
+        <Card className="border-destructive/20 bg-destructive/5 shadow-sm">
           <CardHeader>
             <CardTitle className="text-destructive">Account Actions</CardTitle>
             <CardDescription>Sign out of your account on this device.</CardDescription>
