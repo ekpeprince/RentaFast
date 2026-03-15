@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles, LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles, LogOut, User as UserIcon, Building2 } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -36,10 +36,10 @@ function UserGreeting() {
 
   if (!user) {
     return (
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-black text-primary leading-none">RentaFast</h1>
+      <Link href="/" className="flex flex-col group">
+        <h1 className="text-2xl font-black text-primary leading-none transition-colors group-hover:text-accent">RentaFast</h1>
         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">Cross River Marketplace</p>
-      </div>
+      </Link>
     );
   }
 
@@ -104,7 +104,7 @@ function UserGreeting() {
       
       <div className="hidden md:block">
         <h1 className="text-lg font-black text-primary leading-tight">Hello, {displayName.split(' ')[0]} 👋</h1>
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Find your next home</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cross River Home Hunter</p>
       </div>
     </div>
   );
@@ -132,6 +132,9 @@ function AuthActions() {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
+        <Button asChild variant="ghost" size="sm" className="hidden sm:flex font-bold">
+          <Link href="/marketplace">Marketplace</Link>
+        </Button>
         <Button asChild variant="ghost" size="sm" className="hidden sm:flex">
           <Link href="/guides">Vibe Guides</Link>
         </Button>
@@ -147,6 +150,12 @@ function AuthActions() {
 
   return (
     <div className="flex items-center gap-1 sm:gap-2">
+      <Button asChild variant="ghost" size="icon" title="Marketplace" className="text-primary hover:bg-primary/5">
+        <Link href="/marketplace">
+          <Building2 className="h-5 w-5" />
+        </Link>
+      </Button>
+
       <Button asChild variant="ghost" size="icon" title="Neighborhood Vibe Guides" className="text-accent hover:bg-accent/10">
         <Link href="/guides">
           <MapIcon className="h-5 w-5" />
