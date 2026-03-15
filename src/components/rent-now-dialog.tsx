@@ -1,11 +1,12 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarIcon, Users, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useUser, useFirestore } from '@/firebase';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,7 +23,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import type { Property } from '@/lib/types';
+import type { Property, UserProfile } from '@/lib/types';
 
 interface RentNowDialogProps {
   property: Property;
@@ -39,6 +40,13 @@ export default function RentNowDialog({ property, trigger }: RentNowDialogProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState<Date>();
   const [occupants, setOccupants] = useState('1');
+
+  // Fetch current user's profile for their name
+  const profileRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: profile } = useDoc<UserProfile>(profileRef);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +67,7 @@ export default function RentNowDialog({ property, trigger }: RentNowDialogProps)
     setIsSubmitting(true);
 
     try {
+      // 1. Find or create a chat
       const chatsRef = collection(firestore, 'chats');
       const q = query(
         chatsRef, 
@@ -83,7 +92,20 @@ export default function RentNowDialog({ property, trigger }: RentNowDialogProps)
         chatId = docRef.id;
       }
 
-      // Send the structured application message
+      // 2. Create the formal Application record
+      await addDoc(collection(firestore, 'applications'), {
+        propertyId: property.id,
+        propertyTitle: property.title,
+        landlordId: property.landlordId,
+        tenantId: user.uid,
+        tenantName: profile?.displayName || user.email || 'Anonymous Tenant',
+        status: 'Pending',
+        moveInDate: format(date, 'yyyy-MM-dd'),
+        occupants: parseInt(occupants),
+        createdAt: serverTimestamp(),
+      });
+
+      // 3. Send the structured application message to chat
       const applicationText = `🏠 RENTAL APPLICATION SENT\n\nProperty: ${property.title}\nExpected Move-in: ${format(date, 'PPP')}\nOccupants: ${occupants}\n\nI am interested in renting this property and would like to discuss next steps.`;
 
       await addDoc(collection(firestore, 'chats', chatId, 'messages'), {
@@ -94,7 +116,7 @@ export default function RentNowDialog({ property, trigger }: RentNowDialogProps)
 
       toast({
         title: "Application Sent!",
-        description: "The landlord has been notified. You can now discuss details in chat.",
+        description: "The landlord has been notified and can view your application in their dashboard.",
       });
 
       setOpen(false);

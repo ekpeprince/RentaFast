@@ -139,6 +139,26 @@
         "propertyId": { "type": "string" },
         "savedAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Application": {
+      "title": "Application",
+      "type": "object",
+      "description": "A formal rental application for a property.",
+      "properties": {
+        "propertyId": { "type": "string" },
+        "propertyTitle": { "type": "string" },
+        "landlordId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "tenantName": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["Pending", "Reviewing", "Tour Scheduled", "Accepted", "Rejected"]
+        },
+        "moveInDate": { "type": "string" },
+        "occupants": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["propertyId", "landlordId", "tenantId", "status"]
     }
   },
   "auth": {
@@ -176,6 +196,12 @@
         "$ref": "#/entities/Message"
       },
       "description": "Stores individual messages within a conversation."
+    },
+    "/applications/{applicationId}": {
+      "schema": {
+        "$ref": "#/entities/Application"
+      },
+      "description": "Stores formal rental applications."
     }
   }
 }

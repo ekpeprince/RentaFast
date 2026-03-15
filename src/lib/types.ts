@@ -49,3 +49,16 @@ export interface Favorite {
   propertyId: string;
   savedAt: FieldValue;
 }
+
+export interface Application {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  landlordId: string;
+  tenantId: string;
+  tenantName: string;
+  status: 'Pending' | 'Reviewing' | 'Tour Scheduled' | 'Accepted' | 'Rejected';
+  moveInDate: string;
+  occupants: number;
+  createdAt: FieldValue;
+}

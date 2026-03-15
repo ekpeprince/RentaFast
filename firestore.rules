@@ -45,25 +45,27 @@ service cloud.firestore {
 
     // 3. Chats
     match /chats/{chatId} {
-      // Allow reading the chat metadata if the user is a participant
       allow get: if isSignedIn() && (request.auth.uid in resource.data.participants);
-      
-      // Allow listing chats if the query filters by participants
       allow list: if isSignedIn() && (request.auth.uid in resource.data.participants);
-      
       allow create: if isSignedIn() 
                       && ('participants' in request.resource.data)
                       && (request.auth.uid in request.resource.data.participants);
-                      
       allow update: if isSignedIn() 
                       && (request.auth.uid in resource.data.participants);
       
-      // Messages sub-collection
       match /messages/{messageId} {
         allow read, create: if isSignedIn() 
                       && get(/databases/$(database)/documents/chats/$(chatId)).data.participants != null
                       && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
       }
+    }
+
+    // 4. Applications
+    match /applications/{applicationId} {
+      allow get: if isSignedIn() && (request.auth.uid == resource.data.tenantId || request.auth.uid == resource.data.landlordId);
+      allow list: if isSignedIn() && (request.auth.uid == resource.data.tenantId || request.auth.uid == resource.data.landlordId);
+      allow create: if isSignedIn() && request.resource.data.tenantId == request.auth.uid;
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.landlordId || isAdmin());
     }
   }
 }

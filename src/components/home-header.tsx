@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -106,8 +106,13 @@ function AuthActions() {
           <Heart className="h-5 w-5 text-primary" />
         </Link>
       </Button>
-      {userProfile?.role === 'landlord' && (
+      {(userProfile?.role === 'landlord' || userProfile?.role === 'admin') && (
         <>
+          <Button asChild variant="ghost" size="icon" title="Leads Dashboard">
+            <Link href="/leads">
+              <ClipboardList className="h-5 w-5 text-primary" />
+            </Link>
+          </Button>
           <Button asChild variant="ghost" size="icon" className="hidden sm:flex" title="My Listings">
             <Link href="/my-listings">
               <LayoutDashboard className="h-5 w-5 text-primary" />
