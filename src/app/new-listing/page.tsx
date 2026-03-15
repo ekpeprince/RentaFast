@@ -101,6 +101,7 @@ export default function NewListingPage() {
         description: 'Your property has been listed successfully.',
       });
       
+      // Cleanup loading state before redirect
       setIsLoading(false); 
       router.push('/');
         
@@ -114,6 +115,7 @@ export default function NewListingPage() {
         description: error.message || 'Could not create listing. Please try again.',
       });
       
+      // Cleanup loading state on failure
       setIsLoading(false); 
     }
   };
