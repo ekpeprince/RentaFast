@@ -17,13 +17,28 @@ service cloud.firestore {
 
     // 3. Chats
     match /chats/{chatId} {
-      allow read: if request.auth != null && request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.participants;
-      allow update: if request.auth != null && request.auth.uid in resource.data.participants;
+      // Explicitly allow get and list with safety checks for the participants field
+      allow get, list: if request.auth != null 
+                        && resource.data != null 
+                        && ('participants' in resource.data) 
+                        && (request.auth.uid in resource.data.participants);
+      
+      allow create: if request.auth != null 
+                      && ('participants' in request.resource.data)
+                      && (request.auth.uid in request.resource.data.participants);
+                      
+      allow update: if request.auth != null 
+                      && resource.data != null
+                      && (request.auth.uid in resource.data.participants);
       
       match /messages/{messageId} {
-        allow read: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
-        allow create: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow read: if request.auth != null 
+                      && get(/databases/$(database)/documents/chats/$(chatId)).data.participants != null
+                      && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+                      
+        allow create: if request.auth != null 
+                      && get(/databases/$(database)/documents/chats/$(chatId)).data.participants != null
+                      && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
       }
     }
   }
