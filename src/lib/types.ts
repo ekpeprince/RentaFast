@@ -1,10 +1,11 @@
+
 import type { FieldValue } from 'firebase/firestore';
 
 export type Amenity = 'wifi' | 'power' | 'security';
 
 export interface UserProfile {
   id: string;
-  role: 'landlord' | 'tenant';
+  role: 'landlord' | 'tenant' | 'admin';
   displayName?: string;
   phoneNumber?: string;
   photoURL?: string;

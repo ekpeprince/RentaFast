@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -11,8 +12,8 @@
         },
         "role": {
           "type": "string",
-          "description": "The user's role in the application (either 'landlord' or 'tenant').",
-          "enum": ["landlord", "tenant"]
+          "description": "The user's role in the application (either 'landlord', 'tenant', or 'admin').",
+          "enum": ["landlord", "tenant", "admin"]
         },
         "displayName": {
           "type": "string",

@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -93,6 +94,13 @@ function AuthActions() {
 
   return (
     <div className="flex items-center gap-1 sm:gap-2">
+      {userProfile?.role === 'admin' && (
+        <Button asChild variant="ghost" size="icon" title="Admin Portal" className="text-accent">
+          <Link href="/admin">
+            <ShieldCheck className="h-5 w-5" />
+          </Link>
+        </Button>
+      )}
       <Button asChild variant="ghost" size="icon" title="Saved Properties">
         <Link href="/favorites">
           <Heart className="h-5 w-5 text-primary" />
