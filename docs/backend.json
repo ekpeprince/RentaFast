@@ -78,6 +78,8 @@
           "items": { "type": "string" }
         },
         "period": { "type": "string", "enum": ["yr", "mo"] },
+        "viewCount": { "type": "number", "default": 0 },
+        "favoriteCount": { "type": "number", "default": 0 },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": [

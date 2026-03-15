@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
@@ -13,9 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ClipboardList, MessageSquare, ArrowLeft, User, Calendar, Loader2 } from 'lucide-react';
-import type { Application, UserProfile } from '@/lib/types';
+import { ClipboardList, MessageSquare, ArrowLeft, User, Calendar, Loader2, TrendingUp, Eye, Heart } from 'lucide-react';
+import type { Application, UserProfile, Property } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 export default function LeadsPage() {
   const { user, isUserLoading } = useUser();
@@ -40,6 +42,16 @@ export default function LeadsPage() {
     [firestore, user?.uid]
   );
   const { data: leads, isLoading: isLeadsLoading } = useCollection<Application>(leadsQuery);
+
+  // 3. Fetch landlord's properties for performance insights
+  const propertiesQuery = useMemoFirebase(
+    () => (firestore && user ? query(
+      collection(firestore, 'properties'),
+      where('landlordId', '==', user.uid)
+    ) : null),
+    [firestore, user?.uid]
+  );
+  const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesQuery);
 
   useEffect(() => {
     if (!isUserLoading && !isProfileLoading) {
@@ -66,6 +78,23 @@ export default function LeadsPage() {
     });
   };
 
+  const chartData = useMemo(() => {
+    if (!properties) return [];
+    return properties.map(p => ({
+      name: p.title.length > 15 ? p.title.substring(0, 12) + '...' : p.title,
+      views: p.viewCount || 0,
+      favorites: p.favoriteCount || 0,
+    })).sort((a, b) => b.views - a.views).slice(0, 5);
+  }, [properties]);
+
+  const totalStats = useMemo(() => {
+    if (!properties) return { views: 0, favs: 0 };
+    return properties.reduce((acc, p) => ({
+      views: acc.views + (p.viewCount || 0),
+      favs: acc.favs + (p.favoriteCount || 0)
+    }), { views: 0, favs: 0 });
+  }, [properties]);
+
   const getStatusBadge = (status: Application['status']) => {
     switch (status) {
       case 'Pending': return <Badge variant="secondary">Pending</Badge>;
@@ -90,18 +119,126 @@ export default function LeadsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <Button asChild variant="ghost" className="-ml-2 mb-2">
-          <Link href="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-extrabold text-primary flex items-center gap-3">
-          Leads Dashboard
-          <ClipboardList className="h-8 w-8 text-accent" />
-        </h1>
-        <p className="text-muted-foreground">Track and manage your incoming rental applications.</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <Button asChild variant="ghost" className="-ml-2 mb-2">
+            <Link href="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-extrabold text-primary flex items-center gap-3">
+            Leads Dashboard
+            <ClipboardList className="h-8 w-8 text-accent" />
+          </h1>
+          <p className="text-muted-foreground">Track engagement and manage your Cross River rental applications.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-accent" />
+                  Market Performance
+                </CardTitle>
+                <CardDescription>Views vs. Favorites for your top listings.</CardDescription>
+              </div>
+              <div className="flex gap-4">
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Views</p>
+                  <p className="text-xl font-bold text-primary">{totalStats.views}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Favorites</p>
+                  <p className="text-xl font-bold text-accent">{totalStats.favs}</p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              {isPropertiesLoading ? (
+                <Skeleton className="h-full w-full" />
+              ) : chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
+                    <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip 
+                      cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-background border rounded-lg p-3 shadow-xl">
+                              <p className="font-bold mb-2">{payload[0].payload.name}</p>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <div className="w-3 h-3 bg-primary rounded-sm" />
+                                  <span className="text-muted-foreground">Views:</span>
+                                  <span className="font-bold">{payload[0].value}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm">
+                                  <div className="w-3 h-3 bg-accent rounded-sm" />
+                                  <span className="text-muted-foreground">Favorites:</span>
+                                  <span className="font-bold">{payload[1].value}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={32} />
+                    <Bar dataKey="favorites" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} barSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center border-2 border-dashed rounded-xl">
+                  <TrendingUp className="h-10 w-10 text-muted-foreground mb-2 opacity-20" />
+                  <p className="text-muted-foreground">No property data available yet.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Insights</CardTitle>
+            <CardDescription>Overview of listing activity.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Eye className="h-4 w-4" /> Average Views
+                </span>
+                <span className="font-bold">
+                  {properties?.length ? Math.round(totalStats.views / properties.length) : 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Heart className="h-4 w-4" /> Average Favs
+                </span>
+                <span className="font-bold">
+                  {properties?.length ? (totalStats.favs / properties.length).toFixed(1) : 0}
+                </span>
+              </div>
+            </div>
+            <div className="pt-4 border-t">
+              <p className="text-sm font-bold text-primary mb-1">Market Tip</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Properties with high views but low applications might need a better price or more detailed description. Try using 'Magic Write' to improve your listing.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6">

@@ -1,7 +1,8 @@
+
 'use client';
 
 import Image from 'next/image';
-import { Heart, BedDouble, Bath, Loader2 } from 'lucide-react';
+import { Heart, BedDouble, Bath, Loader2, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Property, Favorite } from '@/lib/types';
@@ -9,8 +10,8 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, serverTimestamp } from 'firebase/firestore';
-import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, serverTimestamp, increment } from 'firebase/firestore';
+import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -56,8 +57,13 @@ export default function PropertyCard({ listing }: PropertyCardProps) {
     if (!favoriteRef) return;
 
     setIsToggling(true);
+    const listingRef = doc(firestore, 'properties', listing.id);
+
     if (favorite) {
       deleteDocumentNonBlocking(favoriteRef);
+      updateDocumentNonBlocking(listingRef, {
+        favoriteCount: increment(-1)
+      });
       toast({
         title: "Removed from saved",
         description: "The property has been removed from your list.",
@@ -67,6 +73,9 @@ export default function PropertyCard({ listing }: PropertyCardProps) {
         propertyId: listing.id,
         savedAt: serverTimestamp(),
       }, { merge: true });
+      updateDocumentNonBlocking(listingRef, {
+        favoriteCount: increment(1)
+      });
       toast({
         title: "Saved to favorites",
         description: "You can view this property later in your Saved list.",
@@ -88,9 +97,12 @@ export default function PropertyCard({ listing }: PropertyCardProps) {
             data-ai-hint={imageHint}
           />
         </div>
-        <div className="absolute top-0 left-0 p-2">
+        <div className="absolute top-0 left-0 p-2 flex flex-col gap-1">
           <Badge variant="accent" className="text-sm font-bold shadow-sm">
             {formatCurrency(listing.price)}/{listing.period}
+          </Badge>
+          <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-none backdrop-blur-sm w-fit">
+            <Eye className="h-3 w-3 mr-1" /> {listing.viewCount || 0}
           </Badge>
         </div>
         <div className="absolute top-0 right-0 p-2 z-10">

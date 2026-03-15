@@ -25,6 +25,8 @@ export interface Property {
   imageUrls: string[];
   amenities: Amenity[];
   period: 'yr' | 'mo';
+  viewCount?: number;
+  favoriteCount?: number;
   createdAt: FieldValue; 
 }
 

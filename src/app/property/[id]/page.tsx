@@ -1,10 +1,11 @@
+
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon } from 'lucide-react';
+import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon, Eye } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,8 +16,9 @@ import AmenityIcon from '@/components/amenity-icon';
 import RentNowDialog from '@/components/rent-now-dialog';
 import type { Property, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 function PropertyDetailsSkeleton() {
   return (
@@ -60,6 +62,16 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
     [firestore, params.id]
   );
   const { data: property, isLoading } = useDoc<Property>(propertyRef);
+
+  // Increment view count on mount
+  useEffect(() => {
+    if (firestore && params.id) {
+      const docRef = doc(firestore, 'properties', params.id);
+      updateDocumentNonBlocking(docRef, {
+        viewCount: increment(1)
+      });
+    }
+  }, [firestore, params.id]);
 
   // Fetch landlord info
   const landlordRef = useMemoFirebase(
@@ -165,6 +177,11 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
               <CardHeader className="p-8">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="bg-primary/5 text-primary border-none">
+                        <Eye className="h-3 w-3 mr-1" /> {property.viewCount || 0} views
+                      </Badge>
+                    </div>
                     <CardTitle className="text-3xl font-extrabold text-primary">{property.title}</CardTitle>
                     <p className="text-lg text-muted-foreground">{property.location}</p>
                   </div>
