@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon, Eye, Star } from 'lucide-react';
@@ -52,27 +53,30 @@ function PropertyDetailsSkeleton() {
   )
 }
 
-export default function PropertyPage({ params }: { params: { id: string } }) {
+export default function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
+  const id = resolvedParams.id;
+  
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const [isStartingChat, setIsStartingChat] = useState(false);
 
   const propertyRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'properties', params.id) : null),
-    [firestore, params.id]
+    () => (firestore && id ? doc(firestore, 'properties', id) : null),
+    [firestore, id]
   );
   const { data: property, isLoading } = useDoc<Property>(propertyRef);
 
   // Increment view count on mount
   useEffect(() => {
-    if (firestore && params.id) {
-      const docRef = doc(firestore, 'properties', params.id);
+    if (firestore && id) {
+      const docRef = doc(firestore, 'properties', id);
       updateDocumentNonBlocking(docRef, {
         viewCount: increment(1)
       });
     }
-  }, [firestore, params.id]);
+  }, [firestore, id]);
 
   // Fetch landlord info
   const landlordRef = useMemoFirebase(
@@ -240,7 +244,7 @@ export default function PropertyPage({ params }: { params: { id: string } }) {
                 )}
 
                 <div className="pt-8 border-t">
-                  <ReviewSection propertyId={params.id} />
+                  <ReviewSection propertyId={id} />
                 </div>
               </CardContent>
             </Card>

@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, ArrowLeft } from 'lucide-react';
@@ -13,7 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { Chat, Message } from '@/lib/types';
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
+  const id = resolvedParams.id;
+  
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
@@ -27,14 +31,14 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   }, [user, isUserLoading, router]);
 
   const chatRef = useMemoFirebase(
-    () => (firestore ? doc(firestore, 'chats', params.id) : null),
-    [firestore, params.id]
+    () => (firestore && id ? doc(firestore, 'chats', id) : null),
+    [firestore, id]
   );
   const { data: chat, isLoading: isChatLoading } = useDoc<Chat>(chatRef);
 
   const messagesQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'chats', params.id, 'messages'), orderBy('createdAt', 'asc')) : null),
-    [firestore, params.id]
+    () => (firestore && id ? query(collection(firestore, 'chats', id, 'messages'), orderBy('createdAt', 'asc')) : null),
+    [firestore, id]
   );
   const { data: messages, isLoading: isMessagesLoading } = useCollection<Message>(messagesQuery);
 
@@ -46,7 +50,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !firestore || !chat) return;
+    if (!newMessage.trim() || !user || !firestore || !chat || !id) return;
 
     const messageData = {
       senderId: user.uid,
@@ -57,10 +61,10 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setNewMessage('');
 
     // Add message to sub-collection
-    addDoc(collection(firestore, 'chats', params.id, 'messages'), messageData);
+    addDoc(collection(firestore, 'chats', id, 'messages'), messageData);
 
     // Update chat metadata
-    updateDoc(doc(firestore, 'chats', params.id), {
+    updateDoc(doc(firestore, 'chats', id), {
       lastMessage: newMessage.trim(),
       updatedAt: serverTimestamp(),
     });
