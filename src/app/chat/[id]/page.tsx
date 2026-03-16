@@ -70,7 +70,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     });
   };
 
-  if (isUserLoading || isChatLoading) {
+  if (isUserLoading || isChatLoading || (firestore && !chatRef)) {
     return (
       <div className="container mx-auto px-4 py-8 h-[calc(100vh-100px)] flex flex-col">
         <Skeleton className="h-10 w-48 mb-6" />

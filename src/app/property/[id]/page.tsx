@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon, Eye, Star } from 'lucide-react';
+import { ShieldCheck, BedDouble, Bath, Building, ArrowLeft, Phone, User as UserIcon, Eye, Star, Loader2 } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc, collection, query, where, getDocs, addDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -126,13 +126,18 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
     }
   };
 
-  if (isLoading) {
+  // If we are still loading, OR if we have firestore but the reference isn't ready yet, show skeleton
+  if (isLoading || (firestore && !propertyRef)) {
     return <PropertyDetailsSkeleton />;
   }
 
-  if (!property) {
+  // Only call notFound() if we are definitely NOT loading and we have NO property data
+  if (!property && !isLoading) {
     notFound();
+    return null;
   }
+
+  if (!property) return <PropertyDetailsSkeleton />;
 
   const propertyImages = property.imageUrls && property.imageUrls.length > 0 
     ? property.imageUrls 
