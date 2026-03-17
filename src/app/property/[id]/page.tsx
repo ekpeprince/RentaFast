@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -126,22 +125,23 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
     }
   };
 
-  // If we are still loading, OR if we have firestore but the reference isn't ready yet, show skeleton
+  // If loading, show skeleton.
   if (isLoading || (firestore && !propertyRef)) {
     return <PropertyDetailsSkeleton />;
   }
 
-  // Only call notFound() if we are definitely NOT loading and we have NO property data
-  if (!property && !isLoading) {
+  // Definitively check for non-existent property AFTER loading is complete.
+  if (!isLoading && property === null) {
     notFound();
     return null;
   }
 
+  // At this point, property must be defined.
   if (!property) return <PropertyDetailsSkeleton />;
 
   const propertyImages = property.imageUrls && property.imageUrls.length > 0 
     ? property.imageUrls 
-    : [(PlaceHolderImages.find((img) => img.id === 'lekki-apartment') || PlaceHolderImages[0]).imageUrl];
+    : [(PlaceHolderImages.find((img) => img.id === 'mcc-apartment') || PlaceHolderImages[0]).imageUrl];
 
   const isOwner = user?.uid === property.landlordId;
 

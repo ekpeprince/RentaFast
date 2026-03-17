@@ -1,9 +1,8 @@
-
 'use client';
 
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
 import { Send, ArrowLeft } from 'lucide-react';
 import { useUser, useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
@@ -60,16 +59,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     setNewMessage('');
 
-    // Add message to sub-collection
     addDoc(collection(firestore, 'chats', id, 'messages'), messageData);
 
-    // Update chat metadata
     updateDoc(doc(firestore, 'chats', id), {
       lastMessage: newMessage.trim(),
       updatedAt: serverTimestamp(),
     });
   };
 
+  // If loading, show skeleton.
   if (isUserLoading || isChatLoading || (firestore && !chatRef)) {
     return (
       <div className="container mx-auto px-4 py-8 h-[calc(100vh-100px)] flex flex-col">
@@ -77,6 +75,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         <Skeleton className="flex-1 w-full rounded-xl" />
       </div>
     );
+  }
+
+  // Definitively check for non-existent chat AFTER loading is complete.
+  if (!isChatLoading && chat === null) {
+    notFound();
+    return null;
   }
 
   if (!user || !chat) return null;
