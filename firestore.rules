@@ -26,7 +26,10 @@ service cloud.firestore {
 
     // 1. Users Profile
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      // Allow anyone to get a profile. This is necessary for:
+      // - Tenants to see Landlord names/badges on listings.
+      // - Landlords to see Tenant resumes on applications.
+      allow get: if true; 
       allow list: if isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
@@ -42,6 +45,7 @@ service cloud.firestore {
       allow get, list: if true; 
       
       // Allow anyone (even unauthenticated) to increment viewCount
+      // This requires allowing update if only viewCount is changed.
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']);
       
       // Authorized writes for landlords/admins
