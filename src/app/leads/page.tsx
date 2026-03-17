@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -91,28 +90,39 @@ export default function LeadsPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // 1. Fetch landlord's profile to confirm role
+  // 1. Fetch current user's profile to confirm role
   const profileRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
-  // 2. Fetch leads ONLY if profile is loaded and user is landlord/admin
-  // Crucial: The query MUST filter by landlordId to match security rules
+  // 2. Fetch leads ONLY if profile is loaded and role is authorized
   const leadsQuery = useMemoFirebase(
     () => {
       if (!firestore || !user || !profile) return null;
-      if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
-
-      return query(
-        collection(firestore, 'applications'), 
-        where('landlordId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
+      
+      const applicationsRef = collection(firestore, 'applications');
+      
+      // Admins see everything
+      if (profile.role === 'admin') {
+        return query(applicationsRef, orderBy('createdAt', 'desc'));
+      }
+      
+      // Landlords see only their own, and MUST filter by landlordId to satisfy security rules
+      if (profile.role === 'landlord') {
+        return query(
+          applicationsRef, 
+          where('landlordId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+      }
+      
+      return null;
     },
     [firestore, user?.uid, profile?.role]
   );
+  
   const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Application>(leadsQuery);
 
   // 3. Fetch properties for performance stats
@@ -121,8 +131,11 @@ export default function LeadsPage() {
       if (!firestore || !user || !profile) return null;
       if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
 
+      const propsRef = collection(firestore, 'properties');
+      if (profile.role === 'admin') return query(propsRef, orderBy('createdAt', 'desc'));
+
       return query(
-        collection(firestore, 'properties'),
+        propsRef,
         where('landlordId', '==', user.uid)
       );
     },

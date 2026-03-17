@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -44,7 +43,7 @@ export default function SignUpPage() {
       const user = userCredential.user;
 
       // 2. CRITICAL: Wait for the user document to be written before navigating.
-      // This prevents "Missing or Insufficient Permissions" errors on the home/leads page.
+      // This prevents "Missing or Insufficient Permissions" errors on the first page load.
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, {
         id: user.uid,
