@@ -7,10 +7,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Safely check for a user's role by reading their document
-    // We use get() to look up the role in the 'users' collection
+    // Safely check for a user's role. Using exists() first is critical to avoid errors on missing docs.
     function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let userDoc = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userDoc) ? get(userDoc).data.role : 'unverified';
     }
 
     function isAdmin() {
@@ -29,15 +29,11 @@ service cloud.firestore {
 
     // 1. User Profiles
     match /users/{userId} {
-      // Profiles are publicly readable so tenants can verify landlords and vice versa
       allow get: if true;
-      // Only admins can list all users (e.g., in the Admin Portal)
       allow list: if isAdmin();
-      // Users manage their own profiles
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       
-      // Favorites sub-collection
       match /favorites/{propertyId} {
         allow read, write: if isOwner(userId);
       }
@@ -46,11 +42,10 @@ service cloud.firestore {
     // 2. Property Listings
     match /properties/{propertyId} {
       allow read: if true;
-      // Allow metadata updates (views/favs) from any visitor
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'favoriteCount', 'averageRating', 'reviewCount']);
       
       allow create: if isLandlord() || isAdmin();
-      allow update, delete: if (isSignedIn() && resource.data.landlordId == request.auth.uid) || isAdmin();
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.landlordId == request.auth.uid);
 
       match /reviews/{reviewId} {
         allow read: if true;
@@ -72,11 +67,19 @@ service cloud.firestore {
 
     // 4. Rental Applications (Leads)
     match /applications/{applicationId} {
-      // Landlords and tenants see their own; Admins see all.
-      allow read: if isSignedIn() && (
+      // Landlords and tenants see their own documents; Admins see all.
+      allow get: if isSignedIn() && (
         isAdmin() ||
         request.auth.uid == resource.data.tenantId || 
         request.auth.uid == resource.data.landlordId
+      );
+      
+      // For collection queries (list), the query must be filtered by landlordId or tenantId
+      // UNLESS the user is an admin.
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.landlordId ||
+        request.auth.uid == resource.data.tenantId
       );
       
       allow create: if isSignedIn();

@@ -43,7 +43,8 @@ export default function SignUpPage() {
       const user = userCredential.user;
 
       // 2. CRITICAL: Wait for the user document to be written before navigating.
-      // This prevents "Missing or Insufficient Permissions" errors on the first page load.
+      // This prevents "Missing or Insufficient Permissions" errors on the first page load
+      // because security rules rely on this document's existence.
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, {
         id: user.uid,
@@ -57,6 +58,7 @@ export default function SignUpPage() {
         description: `Your account as a ${role} has been created.`,
       });
 
+      // Navigate home after we are certain the profile doc exists
       router.push('/');
     } catch (error: any) {
       toast({
