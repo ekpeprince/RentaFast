@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -31,9 +30,10 @@ export default function AdminPage() {
   const { data: currentUserProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(currentUserRef);
 
   // 2. Fetch all landlords for verification
+  // CRITICAL: Only fire the list query once we know the current user is an admin
   const landlordsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'users'), where('role', '==', 'landlord')) : null),
-    [firestore]
+    () => (firestore && currentUserProfile?.role === 'admin' ? query(collection(firestore, 'users'), where('role', '==', 'landlord')) : null),
+    [firestore, currentUserProfile?.role]
   );
   const { data: users, isLoading: isUsersLoading } = useCollection<UserProfile>(landlordsQuery);
 

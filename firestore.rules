@@ -8,14 +8,17 @@ service cloud.firestore {
     }
 
     // Safely check for a user's role by reading their document
-    function hasRole(role) {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    // We use get() to look up the role in the 'users' collection
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     function isAdmin() {
-      return hasRole('admin');
+      return isSignedIn() && getRole() == 'admin';
+    }
+
+    function isLandlord() {
+      return isSignedIn() && getRole() == 'landlord';
     }
 
     function isOwner(userId) {
@@ -28,7 +31,7 @@ service cloud.firestore {
     match /users/{userId} {
       // Profiles are publicly readable so tenants can verify landlords and vice versa
       allow get: if true;
-      // Only admins can list all users
+      // Only admins can list all users (e.g., in the Admin Portal)
       allow list: if isAdmin();
       // Users manage their own profiles
       allow create: if isOwner(userId);
@@ -46,7 +49,7 @@ service cloud.firestore {
       // Allow metadata updates (views/favs) from any visitor
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'favoriteCount', 'averageRating', 'reviewCount']);
       
-      allow create: if hasRole('landlord') || isAdmin();
+      allow create: if isLandlord() || isAdmin();
       allow update, delete: if (isSignedIn() && resource.data.landlordId == request.auth.uid) || isAdmin();
 
       match /reviews/{reviewId} {
@@ -70,7 +73,6 @@ service cloud.firestore {
     // 4. Rental Applications (Leads)
     match /applications/{applicationId} {
       // Landlords and tenants see their own; Admins see all.
-      // For 'list' to work, landlords MUST filter their query by landlordId.
       allow read: if isSignedIn() && (
         isAdmin() ||
         request.auth.uid == resource.data.tenantId || 

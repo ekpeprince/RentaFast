@@ -100,7 +100,8 @@ export default function LeadsPage() {
   // 2. Fetch leads ONLY if profile is loaded and role is authorized
   const leadsQuery = useMemoFirebase(
     () => {
-      if (!firestore || !user || !profile) return null;
+      // CRITICAL: We wait until profile is definitively loaded and exists
+      if (!firestore || !user || isProfileLoading || !profile) return null;
       
       const applicationsRef = collection(firestore, 'applications');
       
@@ -120,7 +121,7 @@ export default function LeadsPage() {
       
       return null;
     },
-    [firestore, user?.uid, profile?.role]
+    [firestore, user?.uid, profile, isProfileLoading]
   );
   
   const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Application>(leadsQuery);
@@ -128,7 +129,7 @@ export default function LeadsPage() {
   // 3. Fetch properties for performance stats
   const propertiesQuery = useMemoFirebase(
     () => {
-      if (!firestore || !user || !profile) return null;
+      if (!firestore || !user || isProfileLoading || !profile) return null;
       if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
 
       const propsRef = collection(firestore, 'properties');
@@ -139,7 +140,7 @@ export default function LeadsPage() {
         where('landlordId', '==', user.uid)
       );
     },
-    [firestore, user?.uid, profile?.role]
+    [firestore, user?.uid, profile, isProfileLoading]
   );
   const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesQuery);
 
