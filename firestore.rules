@@ -12,28 +12,29 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isAdmin() {
       return isSignedIn() && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+             getUserData().role == 'admin';
     }
 
     function hasRole(role) {
       return isSignedIn() && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+             getUserData().role == role;
     }
 
     // 1. Users Profile
     match /users/{userId} {
-      // Public read for profile info (names, badges, landlord verification)
       allow get: if true; 
-      // Only admins can list all users
       allow list: if isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       
-      // User's own favorites
       match /favorites/{propertyId} {
         allow read, write: if isOwner(userId);
       }
@@ -42,15 +43,10 @@ service cloud.firestore {
     // 2. Properties
     match /properties/{propertyId} {
       allow read: if true; 
-      
-      // Allow public increment of viewCount and other stats
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'favoriteCount', 'averageRating', 'reviewCount']);
-      
-      // Authorized writes for landlords/admins
       allow create, delete: if hasRole('landlord') || isAdmin();
       allow update: if hasRole('landlord') || isAdmin();
 
-      // Reviews
       match /reviews/{reviewId} {
         allow read: if true;
         allow create: if isSignedIn() && request.resource.data.reviewerId == request.auth.uid;
@@ -73,12 +69,11 @@ service cloud.firestore {
 
     // 4. Applications
     match /applications/{applicationId} {
-      // Use 'read' to cover both get and list. 
-      // Landlords/Tenants can list their own via filtered queries. Admins can list all.
+      // Simplified read permission for better list query matching
       allow read: if isSignedIn() && (
-        isAdmin() || 
         request.auth.uid == resource.data.tenantId || 
-        request.auth.uid == resource.data.landlordId
+        request.auth.uid == resource.data.landlordId ||
+        isAdmin()
       );
       allow create: if isSignedIn() && request.resource.data.tenantId == request.auth.uid;
       allow update: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.landlordId);

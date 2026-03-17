@@ -100,23 +100,33 @@ export default function LeadsPage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
   // 2. Fetch leads (applications where user is landlord)
-  // Guarded by profile role check and loading state to prevent unauthorized listing attempts
   const leadsQuery = useMemoFirebase(
-    () => (firestore && user && profile && (profile.role === 'landlord' || profile.role === 'admin') ? query(
-      collection(firestore, 'applications'), 
-      where('landlordId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    ) : null),
+    () => {
+      // Strictly guard the query to prevent permission errors before role is confirmed
+      if (!firestore || !user || !profile) return null;
+      if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
+
+      return query(
+        collection(firestore, 'applications'), 
+        where('landlordId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+    },
     [firestore, user?.uid, profile]
   );
   const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Application>(leadsQuery);
 
   // 3. Fetch landlord's properties for performance insights
   const propertiesQuery = useMemoFirebase(
-    () => (firestore && user && profile && (profile.role === 'landlord' || profile.role === 'admin') ? query(
-      collection(firestore, 'properties'),
-      where('landlordId', '==', user.uid)
-    ) : null),
+    () => {
+      if (!firestore || !user || !profile) return null;
+      if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
+
+      return query(
+        collection(firestore, 'properties'),
+        where('landlordId', '==', user.uid)
+      );
+    },
     [firestore, user?.uid, profile]
   );
   const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesQuery);
@@ -183,12 +193,11 @@ export default function LeadsPage() {
     );
   }
 
-  // If we have an error and we are not loading, it's likely a permission issue
   if (leadsError && !isLeadsLoading) {
     return (
       <div className="container mx-auto p-8 text-center">
         <h2 className="text-xl font-bold text-destructive">Dashboard Error</h2>
-        <p className="text-muted-foreground mt-2">There was a problem loading your leads. Please refresh the page or contact support.</p>
+        <p className="text-muted-foreground mt-2">There was a problem loading your leads. Please refresh the page.</p>
         <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
           Retry
         </Button>
@@ -385,8 +394,6 @@ export default function LeadsPage() {
                           </Button>
                         </div>
                       </div>
-                      
-                      {/* Integrated Renter Resume */}
                       <TenantResume tenantId={lead.tenantId} />
                     </div>
                   </div>
