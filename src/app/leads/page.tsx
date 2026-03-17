@@ -32,7 +32,6 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { Application, UserProfile, Property } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip } from 'recharts';
 
 function TenantResume({ tenantId }: { tenantId: string }) {
@@ -92,37 +91,34 @@ export default function LeadsPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // 1. Verify landlord status
+  // 1. Fetch landlord's profile to confirm role
   const profileRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
   );
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
-  // 2. Fetch leads (applications where user is landlord)
+  // 2. Fetch leads ONLY if profile is loaded and user is landlord/admin
+  // Crucial: The query MUST filter by landlordId to match security rules
   const leadsQuery = useMemoFirebase(
     () => {
-      // CRITICAL: We only initiate the query if:
-      // - Profile is loaded (not undefined/null)
-      // - Role is verified as landlord or admin
-      if (!firestore || !user || !profile || !profile.role) return null;
+      if (!firestore || !user || !profile) return null;
       if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
 
-      // Ensure the query matches the security rule requirements exactly
       return query(
         collection(firestore, 'applications'), 
         where('landlordId', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
     },
-    [firestore, user?.uid, profile]
+    [firestore, user?.uid, profile?.role]
   );
   const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Application>(leadsQuery);
 
-  // 3. Fetch landlord's properties for performance insights
+  // 3. Fetch properties for performance stats
   const propertiesQuery = useMemoFirebase(
     () => {
-      if (!firestore || !user || !profile || !profile.role) return null;
+      if (!firestore || !user || !profile) return null;
       if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
 
       return query(
@@ -130,7 +126,7 @@ export default function LeadsPage() {
         where('landlordId', '==', user.uid)
       );
     },
-    [firestore, user?.uid, profile]
+    [firestore, user?.uid, profile?.role]
   );
   const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesQuery);
 
@@ -142,7 +138,7 @@ export default function LeadsPage() {
         toast({
           variant: 'destructive',
           title: 'Access Denied',
-          description: 'Only landlords can view the leads dashboard.',
+          description: 'Only landlords and admins can view the leads dashboard.',
         });
         router.push('/');
       }
@@ -191,12 +187,12 @@ export default function LeadsPage() {
     return (
       <div className="container mx-auto p-8 flex flex-col items-center justify-center min-h-[50vh]">
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading leads...</p>
+        <p className="text-muted-foreground">Verifying access...</p>
       </div>
     );
   }
 
-  if (leadsError && !isLeadsLoading) {
+  if (leadsError) {
     return (
       <div className="container mx-auto p-8 text-center">
         <h2 className="text-xl font-bold text-destructive">Dashboard Error</h2>
@@ -212,20 +208,18 @@ export default function LeadsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <Button asChild variant="ghost" className="-ml-2 mb-2">
-            <Link href="/">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Link>
-          </Button>
-          <h1 className="text-3xl font-extrabold text-primary flex items-center gap-3">
-            Leads Dashboard
-            <ClipboardList className="h-8 w-8 text-accent" />
-          </h1>
-          <p className="text-muted-foreground">Track engagement and manage your Cross River rental applications.</p>
-        </div>
+      <div className="mb-8">
+        <Button asChild variant="ghost" className="-ml-2 mb-2">
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Link>
+        </Button>
+        <h1 className="text-3xl font-extrabold text-primary flex items-center gap-3">
+          Leads Dashboard
+          <ClipboardList className="h-8 w-8 text-accent" />
+        </h1>
+        <p className="text-muted-foreground">Manage your Cross River rental applications and track performance.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -237,7 +231,7 @@ export default function LeadsPage() {
                   <TrendingUp className="h-5 w-5 text-accent" />
                   Market Performance
                 </CardTitle>
-                <CardDescription>Views vs. Favorites for your top listings.</CardDescription>
+                <CardDescription>Visual stats for your active listings.</CardDescription>
               </div>
               <div className="flex gap-4">
                 <div className="text-right">
@@ -245,7 +239,7 @@ export default function LeadsPage() {
                   <p className="text-xl font-bold text-primary">{totalStats.views}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Favorites</p>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total Favs</p>
                   <p className="text-xl font-bold text-accent">{totalStats.favs}</p>
                 </div>
               </div>
@@ -263,28 +257,7 @@ export default function LeadsPage() {
                     <YAxis fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip 
                       cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-background border rounded-lg p-3 shadow-xl">
-                              <p className="font-bold mb-2">{payload[0].payload.name}</p>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-sm">
-                                  <div className="w-3 h-3 bg-primary rounded-sm" />
-                                  <span className="text-muted-foreground">Views:</span>
-                                  <span className="font-bold">{payload[0].value}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                  <div className="w-3 h-3 bg-accent rounded-sm" />
-                                  <span className="text-muted-foreground">Favorites:</span>
-                                  <span className="font-bold">{payload[1].value}</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                     />
                     <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={32} />
                     <Bar dataKey="favorites" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} barSize={32} />
@@ -292,8 +265,7 @@ export default function LeadsPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center border-2 border-dashed rounded-xl">
-                  <TrendingUp className="h-10 w-10 text-muted-foreground mb-2 opacity-20" />
-                  <p className="text-muted-foreground">No property data available yet.</p>
+                  <p className="text-muted-foreground">No listing data available yet.</p>
                 </div>
               )}
             </div>
@@ -302,14 +274,14 @@ export default function LeadsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Quick Insights</CardTitle>
-            <CardDescription>Overview of listing activity.</CardDescription>
+            <CardTitle>Market Insights</CardTitle>
+            <CardDescription>Activity overview.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-muted-foreground">
-                  <Eye className="h-4 w-4" /> Average Views
+                  <Eye className="h-4 w-4" /> Avg Views
                 </span>
                 <span className="font-bold">
                   {properties?.length ? Math.round(totalStats.views / properties.length) : 0}
@@ -317,7 +289,7 @@ export default function LeadsPage() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-muted-foreground">
-                  <Heart className="h-4 w-4" /> Average Favs
+                  <Heart className="h-4 w-4" /> Avg Favs
                 </span>
                 <span className="font-bold">
                   {properties?.length ? (totalStats.favs / properties.length).toFixed(1) : 0}
@@ -325,9 +297,9 @@ export default function LeadsPage() {
               </div>
             </div>
             <div className="pt-4 border-t">
-              <p className="text-sm font-bold text-primary mb-1">Market Tip</p>
+              <p className="text-sm font-bold text-primary mb-1">Conversion Tip</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Properties with high views but low applications might need a better price or more detailed description. Try using 'Magic Write' to improve your listing.
+                If views are high but applications are low, consider updating your description with 'Magic Write' or reducing the price.
               </p>
             </div>
           </CardContent>
@@ -338,7 +310,7 @@ export default function LeadsPage() {
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle>Recent Applications</CardTitle>
-            <CardDescription>View tenant details, move-in dates, and update application status.</CardDescription>
+            <CardDescription>Review tenant resumes and update status.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLeadsLoading ? (
@@ -350,7 +322,7 @@ export default function LeadsPage() {
             ) : leads && leads.length > 0 ? (
               <div className="grid gap-4">
                 {leads.map((lead) => (
-                  <div key={lead.id} className="group p-4 rounded-xl border bg-card hover:bg-muted/30 transition-all shadow-sm">
+                  <div key={lead.id} className="p-4 rounded-xl border bg-card hover:bg-muted/30 transition-all">
                     <div className="flex flex-col gap-1">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-1">
@@ -358,8 +330,8 @@ export default function LeadsPage() {
                             <h3 className="text-lg font-bold text-primary">{lead.tenantName}</h3>
                             {getStatusBadge(lead.status)}
                           </div>
-                          <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                            Interested in: <span className="text-foreground">{lead.propertyTitle}</span>
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Property: <span className="text-foreground">{lead.propertyTitle}</span>
                           </p>
                           <div className="flex flex-wrap gap-4 pt-2">
                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -378,8 +350,8 @@ export default function LeadsPage() {
                             value={lead.status} 
                             onValueChange={(val: Application['status']) => handleUpdateStatus(lead.id, val)}
                           >
-                            <SelectTrigger className="w-[180px] h-10">
-                              <SelectValue placeholder="Update Status" />
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Status" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Pending">Pending</SelectItem>
@@ -390,7 +362,7 @@ export default function LeadsPage() {
                             </SelectContent>
                           </Select>
                           
-                          <Button asChild variant="outline" size="icon" className="h-10 w-10" title="Open Chat">
+                          <Button asChild variant="outline" size="icon" title="Chat">
                             <Link href={`/messages`}>
                               <MessageSquare className="h-4 w-4" />
                             </Link>
@@ -406,8 +378,8 @@ export default function LeadsPage() {
               <div className="text-center py-20 border-2 border-dashed rounded-xl">
                 <ClipboardList className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-20" />
                 <h3 className="text-xl font-bold">No applications yet</h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
-                  When tenants use the "Rent Now" button on your listings, their applications will appear here.
+                <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+                  Tenant applications for your listings in Cross River will appear here.
                 </p>
               </div>
             )}

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -38,25 +39,23 @@ export default function SignUpPage() {
 
     setIsLoading(true);
     try {
+      // 1. Create the Auth account
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // CRITICAL: We await the document creation here to ensure that by the time
-      // the user navigates to a dashboard, their role document ALREADY exists.
-      // This prevents 'Missing or Insufficient Permissions' errors during initial load.
+      // 2. CRITICAL: Wait for the user document to be written before navigating.
+      // This prevents "Missing or Insufficient Permissions" errors on the home/leads page.
       const userDocRef = doc(firestore, 'users', user.uid);
-      const userData = {
+      await setDoc(userDocRef, {
         id: user.uid,
         role: role,
-        displayName: email.split('@')[0], // Fallback display name
+        displayName: email.split('@')[0],
         createdAt: new Date().toISOString()
-      };
-      
-      await setDoc(userDocRef, userData, { merge: true });
+      }, { merge: true });
 
       toast({
         title: 'Welcome to RentaFast!',
-        description: `Account created successfully as a ${role}.`,
+        description: `Your account as a ${role} has been created.`,
       });
 
       router.push('/');
@@ -74,8 +73,8 @@ export default function SignUpPage() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Create an Account</CardTitle>
-          <CardDescription>Join RentaFast to find or list your next property.</CardDescription>
+          <CardTitle>Join RentaFast</CardTitle>
+          <CardDescription>The smartest way to rent in Cross River State.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4">
@@ -84,7 +83,7 @@ export default function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -100,31 +99,31 @@ export default function SignUpPage() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label>Are you a?</Label>
+            <div className="space-y-2 pt-2">
+              <Label className="text-sm font-bold">I am looking to...</Label>
               <RadioGroup
                 defaultValue="tenant"
-                className="flex space-x-4"
+                className="flex gap-6 mt-2"
                 onValueChange={(value: 'tenant' | 'landlord') => setRole(value)}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="tenant" id="tenant" />
-                  <Label htmlFor="tenant">Tenant</Label>
+                  <Label htmlFor="tenant" className="cursor-pointer">Find a Home</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="landlord" id="landlord" />
-                  <Label htmlFor="landlord">Landlord</Label>
+                  <Label htmlFor="landlord" className="cursor-pointer">List a Home</Label>
                 </div>
               </RadioGroup>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+          <CardFooter className="flex flex-col gap-4">
+            <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Create Account'}
             </Button>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login" className="underline">
+              <Link href="/login" className="font-bold text-primary underline">
                 Sign In
               </Link>
             </p>
