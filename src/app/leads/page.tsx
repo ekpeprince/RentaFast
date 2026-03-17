@@ -100,7 +100,7 @@ export default function LeadsPage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
   // 2. Fetch leads (applications where user is landlord)
-  // Guarded by profile role check to prevent unauthorized listing attempts
+  // Guarded by profile role check and loading state to prevent unauthorized listing attempts
   const leadsQuery = useMemoFirebase(
     () => (firestore && user && profile && (profile.role === 'landlord' || profile.role === 'admin') ? query(
       collection(firestore, 'applications'), 
@@ -109,7 +109,7 @@ export default function LeadsPage() {
     ) : null),
     [firestore, user?.uid, profile]
   );
-  const { data: leads, isLoading: isLeadsLoading } = useCollection<Application>(leadsQuery);
+  const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Application>(leadsQuery);
 
   // 3. Fetch landlord's properties for performance insights
   const propertiesQuery = useMemoFirebase(
@@ -125,7 +125,7 @@ export default function LeadsPage() {
     if (!isUserLoading && !isProfileLoading) {
       if (!user) {
         router.push('/login');
-      } else if (profile?.role !== 'landlord' && profile?.role !== 'admin') {
+      } else if (profile && profile.role !== 'landlord' && profile.role !== 'admin') {
         toast({
           variant: 'destructive',
           title: 'Access Denied',
@@ -183,7 +183,20 @@ export default function LeadsPage() {
     );
   }
 
-  if (profile?.role !== 'landlord' && profile?.role !== 'admin') return null;
+  // If we have an error and we are not loading, it's likely a permission issue
+  if (leadsError && !isLeadsLoading) {
+    return (
+      <div className="container mx-auto p-8 text-center">
+        <h2 className="text-xl font-bold text-destructive">Dashboard Error</h2>
+        <p className="text-muted-foreground mt-2">There was a problem loading your leads. Please refresh the page or contact support.</p>
+        <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!profile || (profile.role !== 'landlord' && profile.role !== 'admin')) return null;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">

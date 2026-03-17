@@ -12,41 +12,39 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     function hasRole(role) {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == role;
-    }
-    
-    function isAdmin() {
-      return hasRole('admin');
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
 
     // 1. Users Profile
     match /users/{userId} {
-      // Allow anyone to get a profile. This is necessary for:
-      // - Tenants to see Landlord names/badges on listings.
-      // - Landlords to see Tenant resumes on applications.
+      // Public read for profile info (names, badges, landlord verification)
       allow get: if true; 
+      // Only admins can list all users
       allow list: if isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       
       // User's own favorites
       match /favorites/{propertyId} {
-        allow get, list, write: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
     }
 
     // 2. Properties
     match /properties/{propertyId} {
-      allow get, list: if true; 
+      allow read: if true; 
       
-      // Allow anyone (even unauthenticated) to increment viewCount
-      // This requires allowing update if only viewCount is changed.
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']);
+      // Allow public increment of viewCount and other stats
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'favoriteCount', 'averageRating', 'reviewCount']);
       
       // Authorized writes for landlords/admins
       allow create, delete: if hasRole('landlord') || isAdmin();
@@ -62,30 +60,28 @@ service cloud.firestore {
 
     // 3. Chats
     match /chats/{chatId} {
-      allow get: if isSignedIn() && (request.auth.uid in resource.data.participants);
-      allow list: if isSignedIn() && (request.auth.uid in resource.data.participants);
-      allow create: if isSignedIn() 
-                      && ('participants' in request.resource.data)
-                      && (request.auth.uid in request.resource.data.participants);
-      allow update: if isSignedIn() 
-                      && (request.auth.uid in resource.data.participants);
+      allow read: if isSignedIn() && (request.auth.uid in resource.data.participants);
+      allow create: if isSignedIn() && (request.auth.uid in request.resource.data.participants);
+      allow update: if isSignedIn() && (request.auth.uid in resource.data.participants);
       
       match /messages/{messageId} {
-        allow read, create: if isSignedIn() 
-                      && get(/databases/$(database)/documents/chats/$(chatId)).data.participants != null
-                      && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+        allow read, create: if isSignedIn() && 
+                      get(/databases/$(database)/documents/chats/$(chatId)).data.participants != null &&
+                      (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
       }
     }
 
     // 4. Applications
     match /applications/{applicationId} {
-      allow get, list: if isSignedIn() && (
+      // Use 'read' to cover both get and list. 
+      // Landlords/Tenants can list their own via filtered queries. Admins can list all.
+      allow read: if isSignedIn() && (
+        isAdmin() || 
         request.auth.uid == resource.data.tenantId || 
-        request.auth.uid == resource.data.landlordId || 
-        isAdmin()
+        request.auth.uid == resource.data.landlordId
       );
       allow create: if isSignedIn() && request.resource.data.tenantId == request.auth.uid;
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.landlordId || isAdmin());
+      allow update: if isSignedIn() && (isAdmin() || request.auth.uid == resource.data.landlordId);
     }
   }
 }
