@@ -27,8 +27,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
       </div>
 
-      {/* Header Area - Glass Effect to keep background visible but text readable */}
-      <div className="relative z-20 w-full bg-white/5 backdrop-blur-sm border-b border-white/10 shrink-0">
+      {/* Header Area - Subtle glass effect */}
+      <div className="relative z-20 w-full bg-white/5 border-b border-white/10 shrink-0">
         <div className="container mx-auto px-4 py-2 sm:px-6 lg:px-8">
           <HomeHeader />
         </div>
@@ -56,7 +56,7 @@ export default function Home() {
                 Browse Marketplace
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-14 px-10 text-lg font-bold rounded-full bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white transition-transform hover:scale-105 active:scale-95 backdrop-blur-md">
+            <Button asChild variant="outline" size="lg" className="h-14 px-10 text-lg font-bold rounded-full bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white transition-transform hover:scale-105 active:scale-95">
               <Link href="/guides">
                 Explore Neighborhoods
               </Link>
@@ -65,22 +65,22 @@ export default function Home() {
 
           {/* Quick Stats/Features */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/40 backdrop-blur-sm text-[10px] sm:text-xs font-bold text-white shadow-xl">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/40 text-[10px] sm:text-xs font-bold text-white shadow-xl">
                <ShieldCheck className="h-4 w-4 text-accent" /> 100% Verified
              </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/40 backdrop-blur-sm text-[10px] sm:text-xs font-bold text-white shadow-xl">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/40 text-[10px] sm:text-xs font-bold text-white shadow-xl">
                <Zap className="h-4 w-4 text-accent" /> Direct Contact
              </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/40 backdrop-blur-sm text-[10px] sm:text-xs font-bold text-white shadow-xl">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 bg-black/40 text-[10px] sm:text-xs font-bold text-white shadow-xl">
                <Sparkles className="h-4 w-4 text-accent" /> AI Home Matcher
              </div>
           </div>
         </div>
 
-        {/* Minimized Value Props (Footer-aligned) */}
+        {/* Value Props - Removed blur to sharpen appearance */}
         <div className="container mx-auto px-4 mt-auto pb-8 hidden lg:block">
           <div className="grid grid-cols-3 gap-6">
-            <Link href="/guides" className="group p-5 rounded-3xl bg-black/30 border border-white/10 hover:bg-black/50 transition-all backdrop-blur-md flex items-start gap-4 shadow-2xl">
+            <Link href="/guides" className="group p-5 rounded-3xl bg-black/40 border border-white/10 hover:bg-black/60 transition-all flex items-start gap-4 shadow-2xl">
               <div className="h-12 w-12 shrink-0 rounded-2xl bg-primary/20 flex items-center justify-center text-accent">
                 <MapPin className="h-6 w-6" />
               </div>
@@ -90,7 +90,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link href="/matches" className="group p-5 rounded-3xl bg-black/30 border border-white/10 hover:bg-black/50 transition-all backdrop-blur-md flex items-start gap-4 shadow-2xl">
+            <Link href="/matches" className="group p-5 rounded-3xl bg-black/40 border border-white/10 hover:bg-black/60 transition-all flex items-start gap-4 shadow-2xl">
               <div className="h-12 w-12 shrink-0 rounded-2xl bg-accent/20 flex items-center justify-center text-accent">
                 <Sparkles className="h-6 w-6" />
               </div>
@@ -100,7 +100,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link href="/new-listing" className="group p-5 rounded-3xl bg-black/30 border border-white/10 hover:bg-black/50 transition-all backdrop-blur-md flex items-start gap-4 shadow-2xl">
+            <Link href="/new-listing" className="group p-5 rounded-3xl bg-black/40 border border-white/10 hover:bg-black/60 transition-all flex items-start gap-4 shadow-2xl">
               <div className="h-12 w-12 shrink-0 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-400">
                 <Building className="h-6 w-6" />
               </div>
@@ -114,7 +114,7 @@ export default function Home() {
       </div>
 
       {/* Ultra-compact Footer */}
-      <footer className="py-4 border-t border-white/10 bg-black/60 backdrop-blur-md shrink-0 text-center relative z-20">
+      <footer className="py-4 border-t border-white/10 bg-black/60 shrink-0 text-center relative z-20">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <p className="text-[10px] font-black text-white uppercase tracking-widest">RentaFast Cross River</p>
           <div className="hidden sm:flex gap-6 text-[10px] font-bold text-white/60 uppercase tracking-tighter">

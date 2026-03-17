@@ -40,7 +40,13 @@ service cloud.firestore {
     // 2. Properties
     match /properties/{propertyId} {
       allow get, list: if true; 
-      allow write: if hasRole('landlord') || isAdmin();
+      
+      // Allow anyone (even unauthenticated) to increment viewCount
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount']);
+      
+      // Authorized writes for landlords/admins
+      allow create, delete: if hasRole('landlord') || isAdmin();
+      allow update: if hasRole('landlord') || isAdmin();
 
       // Reviews
       match /reviews/{reviewId} {
