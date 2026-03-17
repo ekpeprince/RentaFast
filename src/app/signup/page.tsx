@@ -42,23 +42,25 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. CRITICAL: Wait for the user document to be written before navigating.
-      // This prevents "Missing or Insufficient Permissions" errors on the first page load
-      // because security rules rely on this document's existence.
+      // 2. CRITICAL: Atomic profile creation
+      // We must be 100% sure the profile exists with the role BEFORE navigating,
+      // as security rules for dashboards depend on this document.
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, {
         id: user.uid,
         role: role,
         displayName: email.split('@')[0],
-        createdAt: new Date().toISOString()
-      }, { merge: true });
+        createdAt: new Date().toISOString(),
+        isVerified: false,
+        verificationStatus: 'unverified'
+      });
 
       toast({
         title: 'Welcome to RentaFast!',
         description: `Your account as a ${role} has been created.`,
       });
 
-      // Navigate home after we are certain the profile doc exists
+      // 3. Navigate home only after doc write is confirmed
       router.push('/');
     } catch (error: any) {
       toast({

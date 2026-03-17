@@ -97,10 +97,10 @@ export default function LeadsPage() {
   );
   const { data: profile, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
 
-  // 2. Fetch leads ONLY if profile is loaded and role is authorized
+  // 2. Fetch leads ONLY if profile is loaded and user is authorized
   const leadsQuery = useMemoFirebase(
     () => {
-      // CRITICAL: We wait until profile is definitively loaded and exists to prevent unauthorized query attempts
+      // Wait for everything to be ready
       if (!firestore || !user || isProfileLoading || !profile) return null;
       
       const applicationsRef = collection(firestore, 'applications');
@@ -110,7 +110,7 @@ export default function LeadsPage() {
         return query(applicationsRef, orderBy('createdAt', 'desc'));
       }
       
-      // Landlords see only their own, and MUST filter by landlordId to satisfy security rules
+      // Landlords see ONLY their own, MUST use the filter to satisfy security rules
       if (profile.role === 'landlord') {
         return query(
           applicationsRef, 
