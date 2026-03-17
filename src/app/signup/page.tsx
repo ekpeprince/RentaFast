@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,8 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -41,15 +41,23 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Save user role in Firestore using the non-blocking function
+      // CRITICAL: We await the document creation here to ensure that by the time
+      // the user navigates to a dashboard, their role document ALREADY exists.
+      // This prevents 'Missing or Insufficient Permissions' errors during initial load.
       const userDocRef = doc(firestore, 'users', user.uid);
       const userData = {
         id: user.uid,
         role: role,
+        displayName: email.split('@')[0], // Fallback display name
+        createdAt: new Date().toISOString()
       };
-      // This function handles its own errors via the global error emitter
-      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+      
+      await setDoc(userDocRef, userData, { merge: true });
 
+      toast({
+        title: 'Welcome to RentaFast!',
+        description: `Account created successfully as a ${role}.`,
+      });
 
       router.push('/');
     } catch (error: any) {
@@ -112,7 +120,7 @@ export default function SignUpPage() {
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Create Account'}
             </Button>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{' '}

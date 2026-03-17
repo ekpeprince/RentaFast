@@ -102,10 +102,13 @@ export default function LeadsPage() {
   // 2. Fetch leads (applications where user is landlord)
   const leadsQuery = useMemoFirebase(
     () => {
-      // Strictly guard the query to prevent permission errors before role is confirmed
-      if (!firestore || !user || !profile) return null;
+      // CRITICAL: We only initiate the query if:
+      // - Profile is loaded (not undefined/null)
+      // - Role is verified as landlord or admin
+      if (!firestore || !user || !profile || !profile.role) return null;
       if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
 
+      // Ensure the query matches the security rule requirements exactly
       return query(
         collection(firestore, 'applications'), 
         where('landlordId', '==', user.uid),
@@ -119,7 +122,7 @@ export default function LeadsPage() {
   // 3. Fetch landlord's properties for performance insights
   const propertiesQuery = useMemoFirebase(
     () => {
-      if (!firestore || !user || !profile) return null;
+      if (!firestore || !user || !profile || !profile.role) return null;
       if (profile.role !== 'landlord' && profile.role !== 'admin') return null;
 
       return query(
