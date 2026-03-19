@@ -121,7 +121,7 @@ export default function LeadsPage() {
       
       return null;
     },
-    [firestore, user?.uid, profile?.role, isProfileLoading]
+    [firestore, user?.uid, profile?.role, isProfileLoading, profile]
   );
   
   const { data: leads, isLoading: isLeadsLoading, error: leadsError } = useCollection<Application>(leadsQuery);
@@ -140,7 +140,7 @@ export default function LeadsPage() {
         where('landlordId', '==', user.uid)
       );
     },
-    [firestore, user?.uid, profile?.role, isProfileLoading]
+    [firestore, user?.uid, profile?.role, isProfileLoading, profile]
   );
   const { data: properties, isLoading: isPropertiesLoading } = useCollection<Property>(propertiesQuery);
 

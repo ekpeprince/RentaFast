@@ -7,13 +7,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Safely check for a user's role.
-    function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    // Safely check for a user's role document.
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getRole() == 'admin';
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin';
     }
 
     function isOwner(userId) {
@@ -24,7 +24,7 @@ service cloud.firestore {
 
     // 1. User Profiles
     match /users/{userId} {
-      // Publicly viewable so tenants can see landlord info and vice-versa
+      // Profiles are publicly readable for marketplace trust
       allow get: if true;
       allow list: if isAdmin();
       allow create: if isOwner(userId);
@@ -38,10 +38,10 @@ service cloud.firestore {
     // 2. Property Listings
     match /properties/{propertyId} {
       allow read: if true;
-      // Allow public to update counts/stats
+      // Allow public to update specific stats for engagement tracking
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount', 'favoriteCount', 'averageRating', 'reviewCount']);
       
-      allow create: if isSignedIn(); // Landlord check handled in app, rules allow create for any signed in user to be safe during profile propagation
+      allow create: if isSignedIn();
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.landlordId == request.auth.uid);
 
       match /reviews/{reviewId} {
@@ -64,15 +64,12 @@ service cloud.firestore {
 
     // 4. Rental Applications (Leads)
     match /applications/{applicationId} {
-      // Allow get/list if user is an admin
-      allow read: if isAdmin();
-      
-      // Allow get/list if user is the tenant or the landlord
-      // For list queries, this requires the query to be filtered by landlordId or tenantId
-      allow read: if isSignedIn() && (
+      // Explicit read rule for individual documents and listings.
+      // For listings, the query MUST be filtered by landlordId or tenantId to pass this rule.
+      allow read: if isAdmin() || (isSignedIn() && (
         resource.data.tenantId == request.auth.uid || 
         resource.data.landlordId == request.auth.uid
-      );
+      ));
       
       allow create: if isSignedIn();
       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.landlordId);
