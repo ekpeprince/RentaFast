@@ -38,11 +38,11 @@ function ListingsGrid({
     return listings.filter((listing) => {
       const matchesCategory = categoryFilter === 'All' || listing.type === categoryFilter;
       const matchesSearch = 
-        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        listing.location.toLowerCase().includes(searchQuery.toLowerCase());
+        (listing.title || '').toLowerCase().includes((searchQuery || '').toLowerCase()) || 
+        (listing.location || '').toLowerCase().includes((searchQuery || '').toLowerCase());
       
-      const matchesPrice = maxPrice === null || listing.price <= maxPrice;
-      const matchesBeds = listing.beds >= minBeds;
+      const matchesPrice = maxPrice === null || (listing.price || 0) <= maxPrice;
+      const matchesBeds = (listing.beds || 0) >= minBeds;
       
       return matchesCategory && matchesSearch && matchesPrice && matchesBeds;
     });
