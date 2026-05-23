@@ -18,6 +18,9 @@ export const NIGERIAN_LOCATIONS = [
   "Calabar - Ikot Ansa",
   "Calabar - Satellite Town",
   "Calabar - Duke Town",
+  "Calabar - Ekorinim 1",
+  "Calabar - Ekorinim 2",
+  "Calabar - Ekpo Abasi",
   
   // --- Ikom Area (Central) ---
   "Ikom - 4 Corners",
