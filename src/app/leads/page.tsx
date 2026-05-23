@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, where, orderBy, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -169,13 +169,66 @@ export default function LeadsPage() {
     });
   };
 
+  const [isStartingChatMap, setIsStartingChatMap] = useState<Record<string, boolean>>({});
+
+  const handleStartChatWithTenant = async (lead: Application) => {
+    if (!user || !firestore) return;
+    
+    setIsStartingChatMap(prev => ({ ...prev, [lead.id]: true }));
+    try {
+      const chatsRef = collection(firestore, 'chats');
+      const q = query(
+        chatsRef,
+        where('participants', 'array-contains', user.uid),
+        where('propertyId', '==', lead.propertyId)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      let chatId = '';
+      
+      // Look for a chat that has the tenant as a participant
+      const existingChat = querySnapshot.docs.find(doc => {
+        const data = doc.data();
+        return data.participants.includes(lead.tenantId);
+      });
+      
+      if (existingChat) {
+        chatId = existingChat.id;
+      } else {
+        const newChat = {
+          participants: [user.uid, lead.tenantId],
+          propertyId: lead.propertyId,
+          propertyTitle: lead.propertyTitle || 'Property',
+          lastMessage: 'Conversation started',
+          updatedAt: serverTimestamp(),
+        };
+        const docRef = await addDoc(chatsRef, newChat);
+        chatId = docRef.id;
+      }
+      
+      router.push(`/chat/${chatId}`);
+    } catch (err: any) {
+      console.warn("Error starting chat from leads:", err);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not connect with tenant. Please try again.',
+      });
+    } finally {
+      setIsStartingChatMap(prev => ({ ...prev, [lead.id]: false }));
+    }
+  };
+
   const chartData = useMemo(() => {
     if (!properties) return [];
-    return properties.map(p => ({
-      name: p.title.length > 15 ? p.title.substring(0, 12) + '...' : p.title,
-      views: p.viewCount || 0,
-      favorites: p.favoriteCount || 0,
-    })).sort((a, b) => b.views - a.views).slice(0, 5);
+    return properties.map(p => {
+      const title = p.title || 'Untitled Property';
+      return {
+        name: title.length > 15 ? title.substring(0, 12) + '...' : title,
+        views: p.viewCount || 0,
+        favorites: p.favoriteCount || 0,
+      };
+    }).sort((a, b) => b.views - a.views).slice(0, 5);
   }, [properties]);
 
   const totalStats = useMemo(() => {
@@ -376,10 +429,18 @@ export default function LeadsPage() {
                             </SelectContent>
                           </Select>
                           
-                          <Button asChild variant="outline" size="icon" title="Chat">
-                            <Link href={`/messages`}>
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            title="Chat with Tenant"
+                            onClick={() => handleStartChatWithTenant(lead)}
+                            disabled={isStartingChatMap[lead.id]}
+                          >
+                            {isStartingChatMap[lead.id] ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                            ) : (
                               <MessageSquare className="h-4 w-4" />
-                            </Link>
+                            )}
                           </Button>
                         </div>
                       </div>
