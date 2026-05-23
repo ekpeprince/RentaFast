@@ -22,7 +22,7 @@ export default function NeighborhoodGuidesPage() {
       const result = await generateNeighborhoodGuide({ location: loc });
       setGuide(result);
     } catch (error) {
-      console.error('Failed to get neighborhood guide:', error);
+      console.warn('Failed to get neighborhood guide:', error);
     } finally {
       setIsLoading(false);
     }

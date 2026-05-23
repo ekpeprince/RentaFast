@@ -32,7 +32,13 @@ const listingSchema = z.object({
   beds: z.preprocess((val) => Number(val), z.number().int().min(1)),
   baths: z.preprocess((val) => Number(val), z.number().int().min(1)),
   amenities: z.array(z.string()).default([]),
-  images: z.any().refine((files) => files instanceof FileList && files.length > 0, 'At least one image is required.'),
+  images: z.any().refine(
+    (files) => 
+      files && 
+      (typeof window === 'undefined' || files instanceof FileList || Array.isArray(files) || (typeof files === 'object' && 'length' in files)) && 
+      files.length > 0, 
+    'At least one image is required.'
+  ),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
@@ -123,20 +129,48 @@ export default function NewListingPage() {
 
     setIsLoading(true);
 
+    // Helper to race a promise against a timeout
+    const promiseTimeout = <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(message)), ms)
+        )
+      ]);
+    };
+
     try {
+      console.log("Listing Submission started.");
       const storage = getStorage(firebaseApp);
       const imageFiles = Array.from(values.images as FileList);
       
-      const imagePromises = imageFiles.map(file => {
+      console.log(`Preparing to upload ${imageFiles.length} image(s)...`);
+      toast({
+        title: 'Uploading Images',
+        description: 'Please wait while we upload your property photos (this may take a moment for large files).',
+      });
+
+      const imagePromises = imageFiles.map((file, idx) => {
         const fileExtension = file.name.split('.').pop();
         const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExtension}`;
         const imageRef = ref(storage, `properties/${user.uid}/${cleanName}`);
         
+        console.log(`Starting upload for image ${idx + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
         return uploadBytes(imageRef, file)
-          .then(snapshot => getDownloadURL(snapshot.ref));
+          .then(snapshot => {
+            console.log(`Image ${idx + 1} uploaded successfully. Fetching URL...`);
+            return getDownloadURL(snapshot.ref);
+          });
       });
       
-      const imageUrls = await Promise.all(imagePromises);
+      // Give image uploads a generous 60 seconds timeout
+      const imageUrls = await promiseTimeout(
+        Promise.all(imagePromises),
+        60000,
+        'Image upload timed out. Your connection might be slow or the files too large. Please try again with smaller images.'
+      );
+      
+      console.log("All images uploaded successfully. URLs:", imageUrls);
 
       const newListingData = {
         landlordId: user.uid,
@@ -153,8 +187,20 @@ export default function NewListingPage() {
         createdAt: serverTimestamp(),
       };
       
-      await addDoc(collection(firestore, "properties"), newListingData);
+      console.log("Saving property metadata to Firestore...", newListingData);
+      toast({
+        title: 'Saving Listing',
+        description: 'Publishing your property to the marketplace...',
+      });
 
+      // Give Firestore write a 15 seconds timeout
+      await promiseTimeout(
+        addDoc(collection(firestore, "properties"), newListingData),
+        15000,
+        'Saving listing timed out. Firestore database is unreachable. Please check your internet connection and try again.'
+      );
+
+      console.log("Listing successfully saved to Firestore!");
       toast({
         title: 'Success!',
         description: 'Your property has been listed successfully.',
@@ -162,7 +208,7 @@ export default function NewListingPage() {
       
       router.push('/my-listings');
     } catch (error: any) {
-      console.error("Listing Submission Error:", error); 
+      console.warn("Listing Submission Error:", error); 
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
@@ -197,7 +243,20 @@ export default function NewListingPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form 
+              onSubmit={form.handleSubmit(
+                onSubmit,
+                (errors) => {
+                  console.warn("Form Validation Errors:", errors);
+                  toast({
+                    variant: 'destructive',
+                    title: 'Form Validation Failed',
+                    description: 'Please check that you have filled in all required fields and selected at least one image.',
+                  });
+                }
+              )} 
+              className="space-y-8"
+            >
               <div className="space-y-6">
                 <FormField
                   control={form.control}

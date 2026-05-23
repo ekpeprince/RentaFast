@@ -92,7 +92,7 @@ export default function SmartMatchesPage() {
       
       setAiMatches(result.matches.sort((a, b) => b.score - a.score));
     } catch (error) {
-      console.error('Match error:', error);
+      console.warn('Match error:', error);
       toast({
         variant: 'destructive',
         title: 'Matching Failed',

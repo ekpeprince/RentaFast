@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import * as React from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -119,7 +121,7 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
 
       router.push(`/chat/${chatId}`);
     } catch (error) {
-      console.error('Error starting chat:', error);
+      console.warn('Error starting chat:', error);
     } finally {
       setIsStartingChat(false);
     }

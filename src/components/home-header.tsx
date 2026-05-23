@@ -48,7 +48,7 @@ function UserGreeting() {
       await auth.signOut();
       router.push('/');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.warn('Error signing out:', error);
     }
   };
 

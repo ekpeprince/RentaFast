@@ -9,10 +9,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    allowedDevOrigins: [
-      '*.cloudworkstations.dev',
-      'localhost:9002'
-    ]
   },
   images: {
     remotePatterns: [
