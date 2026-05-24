@@ -98,7 +98,7 @@ export default function PropertyCard({ listing }: PropertyCardProps) {
           />
         </div>
         <div className="absolute top-0 left-0 p-2 flex flex-col gap-1">
-          <Badge variant="accent" className="text-sm font-bold shadow-sm">
+          <Badge className="bg-accent text-white hover:bg-accent border-none text-sm font-bold shadow-sm">
             {formatCurrency(listing.price)}/{listing.period}
           </Badge>
           <Badge variant="secondary" className="text-[10px] bg-black/50 text-white border-none backdrop-blur-sm w-fit">

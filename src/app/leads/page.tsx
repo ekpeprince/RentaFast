@@ -243,7 +243,7 @@ export default function LeadsPage() {
     switch (status) {
       case 'Pending': return <Badge variant="secondary">Pending</Badge>;
       case 'Reviewing': return <Badge variant="outline" className="text-blue-500 border-blue-500">Reviewing</Badge>;
-      case 'Tour Scheduled': return <Badge variant="accent">Tour Scheduled</Badge>;
+      case 'Tour Scheduled': return <Badge variant="secondary" className="bg-orange-100 text-orange-800 hover:bg-orange-100 border-none">Tour Scheduled</Badge>;
       case 'Accepted': return <Badge className="bg-green-500 hover:bg-green-600">Accepted</Badge>;
       case 'Rejected': return <Badge variant="destructive">Rejected</Badge>;
       default: return <Badge variant="secondary">{status}</Badge>;
