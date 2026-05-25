@@ -16,6 +16,8 @@ export interface UserProfile {
   occupation?: string;
   residentCity?: string;
   preferences?: string;
+  isPremium?: boolean;
+  viewedProperties?: string[];
 }
 
 export interface Property {
