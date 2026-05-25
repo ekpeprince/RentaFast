@@ -148,7 +148,7 @@ export default function RentNowDialog({ property, trigger }: RentNowDialogProps)
           <div className="grid gap-6 py-6">
             <div className="space-y-2">
               <Label htmlFor="date" className="text-sm font-bold">Expected Move-in Date</Label>
-              <Popover>
+              <Popover modal={false}>
                 <PopoverTrigger asChild>
                   <Button
                     variant={"outline"}
@@ -161,7 +161,7 @@ export default function RentNowDialog({ property, trigger }: RentNowDialogProps)
                     {date ? format(date, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0 z-[100]" align="start">
                   <Calendar
                     mode="single"
                     selected={date}
