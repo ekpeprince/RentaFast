@@ -76,7 +76,7 @@ export interface Application {
   landlordId: string;
   tenantId: string;
   tenantName: string;
-  status: 'Pending' | 'Reviewing' | 'Tour Scheduled' | 'Accepted' | 'Rejected';
+  status: 'Pending' | 'Reviewing' | 'Tour Scheduled' | 'Accepted' | 'Rejected' | 'PaidInEscrow' | 'Released' | 'Disputed';
   moveInDate: string;
   occupants: number;
   createdAt: FieldValue;
