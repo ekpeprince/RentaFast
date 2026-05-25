@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles, LogOut, User as UserIcon, Building2 } from 'lucide-react';
+import { Bell, PlusCircle, LayoutDashboard, MessageSquare, Heart, ShieldCheck, ClipboardList, Map as MapIcon, Sparkles, LogOut, User as UserIcon, Building2, Menu } from 'lucide-react';
 import { useUser, useDoc, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,6 +126,8 @@ function UserGreeting() {
 function AuthActions() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
+  const router = useRouter();
 
   const userProfileRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
@@ -159,22 +163,44 @@ function AuthActions() {
     );
   }
 
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.warn('Error signing out:', error);
+    }
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return names[0][0] + names[names.length - 1][0];
+    }
+    return name[0];
+  };
+
+  const emailPrefix = user.email?.split('@')[0] || 'User';
+  const rawDisplayName = userProfile?.displayName || user.displayName || emailPrefix;
+
   return (
     <div className="flex items-center gap-1 sm:gap-2">
-      <Button asChild variant="ghost" size="icon" title="Marketplace" className="text-primary hover:bg-primary/5">
+      {/* Desktop navigation buttons */}
+      <Button asChild variant="ghost" size="icon" title="Marketplace" className="hidden md:inline-flex text-primary hover:bg-primary/5">
         <Link href="/marketplace">
           <Building2 className="h-5 w-5" />
         </Link>
       </Button>
 
-      <Button asChild variant="ghost" size="icon" title="Neighborhood Vibe Guides" className="text-accent hover:bg-accent/10">
+      <Button asChild variant="ghost" size="icon" title="Neighborhood Vibe Guides" className="hidden md:inline-flex text-accent hover:bg-accent/10">
         <Link href="/guides">
           <MapIcon className="h-5 w-5" />
         </Link>
       </Button>
       
       {userProfile?.role === 'tenant' && (
-        <Button asChild variant="ghost" size="icon" title="AI Home Matcher" className="text-accent hover:bg-accent/10">
+        <Button asChild variant="ghost" size="icon" title="AI Home Matcher" className="hidden md:inline-flex text-accent hover:bg-accent/10">
           <Link href="/matches">
             <Sparkles className="h-5 w-5" />
           </Link>
@@ -182,14 +208,14 @@ function AuthActions() {
       )}
 
       {userProfile?.role === 'admin' && (
-        <Button asChild variant="ghost" size="icon" title="Admin Portal" className="text-accent hover:bg-accent/10">
+        <Button asChild variant="ghost" size="icon" title="Admin Portal" className="hidden md:inline-flex text-accent hover:bg-accent/10">
           <Link href="/admin">
             <ShieldCheck className="h-5 w-5" />
           </Link>
         </Button>
       )}
 
-      <Button asChild variant="ghost" size="icon" title="Saved Properties" className="hover:bg-primary/5">
+      <Button asChild variant="ghost" size="icon" title="Saved Properties" className="hidden md:inline-flex hover:bg-primary/5">
         <Link href="/favorites">
           <Heart className="h-5 w-5 text-primary" />
         </Link>
@@ -197,12 +223,12 @@ function AuthActions() {
 
       {(userProfile?.role === 'landlord' || userProfile?.role === 'admin') && (
         <>
-          <Button asChild variant="ghost" size="icon" title="Leads Dashboard" className="hover:bg-primary/5">
+          <Button asChild variant="ghost" size="icon" title="Leads Dashboard" className="hidden md:inline-flex hover:bg-primary/5">
             <Link href="/leads">
               <ClipboardList className="h-5 w-5 text-primary" />
             </Link>
           </Button>
-          <Button asChild variant="accent" size="sm" className="hidden sm:flex font-bold shadow-sm">
+          <Button asChild variant="accent" size="sm" className="hidden md:inline-flex font-bold shadow-sm">
             <Link href="/new-listing">
               <PlusCircle className="mr-2 h-4 w-4" />
               List Home
@@ -211,6 +237,7 @@ function AuthActions() {
         </>
       )}
 
+      {/* Real-time core actions (always visible) */}
       <Button asChild variant="ghost" size="icon" title="Messages" className="hover:bg-primary/5">
         <Link href="/messages">
           <MessageSquare className="h-5 w-5 text-primary" />
@@ -224,13 +251,116 @@ function AuthActions() {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
         </span>
       </Button>
+
+      {/* Mobile navigation sliding drawer */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden hover:bg-primary/5 text-primary" title="Navigation Menu">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-[280px] sm:w-[320px] flex flex-col justify-between p-6 bg-background/95 backdrop-blur-md border-l">
+          <div className="space-y-6">
+            <SheetHeader className="text-left border-b pb-4">
+              <SheetTitle className="text-2xl font-black text-primary tracking-tight">RentaFast</SheetTitle>
+              <div className="flex items-center gap-3 mt-4">
+                <Avatar className="h-10 w-10 border-2 border-primary/10">
+                  <AvatarImage src={user.photoURL ?? ''} alt={rawDisplayName} />
+                  <AvatarFallback className="bg-secondary text-primary font-bold">{getInitials(rawDisplayName)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-bold text-primary truncate">{rawDisplayName}</span>
+                  <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                </div>
+              </div>
+            </SheetHeader>
+
+            <nav className="flex flex-col gap-1.5 pt-2">
+              <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-primary font-bold hover:bg-primary/5 hover:text-primary transition-all">
+                <Link href="/marketplace">
+                  <Building2 className="mr-3 h-4 w-4" />
+                  Browse Marketplace
+                </Link>
+              </Button>
+
+              <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-accent font-bold hover:bg-accent/5 hover:text-accent transition-all">
+                <Link href="/guides">
+                  <MapIcon className="mr-3 h-4 w-4" />
+                  Neighborhood Guides
+                </Link>
+              </Button>
+
+              {userProfile?.role === 'tenant' && (
+                <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-accent font-bold hover:bg-accent/5 hover:text-accent transition-all">
+                  <Link href="/matches">
+                    <Sparkles className="mr-3 h-4 w-4" />
+                    AI Home Matcher
+                  </Link>
+                </Button>
+              )}
+
+              {userProfile?.role === 'admin' && (
+                <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-accent font-bold hover:bg-accent/5 hover:text-accent transition-all">
+                  <Link href="/admin">
+                    <ShieldCheck className="mr-3 h-4 w-4 text-accent" />
+                    Admin Portal
+                  </Link>
+                </Button>
+              )}
+
+              <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-primary font-bold hover:bg-primary/5 hover:text-primary transition-all">
+                <Link href="/favorites">
+                  <Heart className="mr-3 h-4 w-4 text-primary" />
+                  Saved Properties
+                </Link>
+              </Button>
+
+              {(userProfile?.role === 'landlord' || userProfile?.role === 'admin') && (
+                <>
+                  <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-primary font-bold hover:bg-primary/5 hover:text-primary transition-all">
+                    <Link href="/leads">
+                      <ClipboardList className="mr-3 h-4 w-4 text-primary" />
+                      Leads Dashboard
+                    </Link>
+                  </Button>
+                  <Button asChild variant="accent" className="justify-start h-11 px-3 rounded-lg font-bold shadow-sm mt-1">
+                    <Link href="/new-listing">
+                      <PlusCircle className="mr-3 h-4 w-4" />
+                      List a New Home
+                    </Link>
+                  </Button>
+                </>
+              )}
+
+              <div className="border-t my-2" />
+
+              <Button asChild variant="ghost" className="justify-start h-11 px-3 rounded-lg text-primary font-bold hover:bg-primary/5 hover:text-primary transition-all">
+                <Link href="/account">
+                  <UserIcon className="mr-3 h-4 w-4" />
+                  Profile Settings
+                </Link>
+              </Button>
+            </nav>
+          </div>
+
+          <div className="border-t pt-4">
+            <Button onClick={handleSignOut} variant="ghost" className="w-full justify-start h-11 px-3 rounded-lg text-destructive hover:bg-destructive/5 hover:text-destructive font-bold transition-all">
+              <LogOut className="mr-3 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-export default function HomeHeader() {
+export default function HomeHeader({ showBorder = true }: { showBorder?: boolean }) {
   return (
-    <header className="flex items-center justify-between gap-4 py-4 border-b mb-6">
+    <header className={cn(
+      "flex items-center justify-between gap-4 py-4 w-full",
+      showBorder && "border-b mb-6"
+    )}>
       <UserGreeting />
       <AuthActions />
     </header>

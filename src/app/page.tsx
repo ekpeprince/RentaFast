@@ -13,9 +13,9 @@ export default function Home() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'calabar-villa')?.imageUrl || '';
 
   return (
-    <main className="h-screen relative flex flex-col overflow-hidden bg-background">
+    <main className="min-h-screen lg:h-screen relative flex flex-col lg:overflow-hidden bg-background">
       {/* Background Image with Global Overlay */}
-      <div className="absolute inset-0 z-0">
+      <div className="fixed inset-0 z-0">
         <Image 
           src={heroImage} 
           alt="Luxury home in Calabar" 
@@ -29,22 +29,22 @@ export default function Home() {
 
       {/* Header Area - Subtle glass effect */}
       <div className="relative z-20 w-full bg-white/5 border-b border-white/10 shrink-0">
-        <div className="container mx-auto px-4 py-2 sm:px-6 lg:px-8">
-          <HomeHeader />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <HomeHeader showBorder={false} />
         </div>
       </div>
 
       {/* Hero Content Area */}
-      <div className="flex-1 relative z-10 flex flex-col justify-center overflow-hidden">
+      <div className="flex-1 relative z-10 flex flex-col justify-center lg:overflow-hidden py-8 lg:py-0">
         <div className="container px-4 mx-auto text-center space-y-6">
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Badge className="bg-accent text-white border-none px-4 py-1.5 text-xs font-bold uppercase tracking-widest shadow-lg">
               Now Live in Cross River
             </Badge>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none text-white drop-shadow-2xl">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none text-white drop-shadow-2xl">
               Rent Smarter in <br/><span className="text-accent">Cross River State</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-md">
+            <p className="text-base md:text-xl text-white/90 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-md">
               Find verified homes in Calabar, Ikom, and Ogoja with AI matching and local neighborhood vibe checks.
             </p>
           </div>
