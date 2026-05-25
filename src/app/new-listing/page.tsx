@@ -33,10 +33,10 @@ const listingSchema = z.object({
   baths: z.preprocess((val) => Number(val), z.number().int().min(1)),
   amenities: z.array(z.string()).default([]),
   images: z.any().refine(
-    (files) => 
-      files && 
-      (typeof window === 'undefined' || files instanceof FileList || Array.isArray(files) || (typeof files === 'object' && 'length' in files)) && 
-      files.length > 0, 
+    (files) =>
+      files &&
+      (typeof window === 'undefined' || files instanceof FileList || Array.isArray(files) || (typeof files === 'object' && 'length' in files)) &&
+      files.length > 0,
     'At least one image is required.'
   ),
 });
@@ -80,7 +80,7 @@ export default function NewListingPage() {
 
   const handleAiGenerate = async () => {
     const values = form.getValues();
-    
+
     if (!values.title || !values.location || !values.type) {
       toast({
         title: "Missing info",
@@ -100,7 +100,7 @@ export default function NewListingPage() {
         location: values.location,
         keyFeatures: values.description,
       });
-      
+
       form.setValue('description', result.description, { shouldValidate: true });
       toast({
         title: "AI Description Generated",
@@ -143,7 +143,7 @@ export default function NewListingPage() {
       console.log("Listing Submission started.");
       const storage = getStorage(firebaseApp);
       const imageFiles = Array.from(values.images as FileList);
-      
+
       console.log(`Preparing to upload ${imageFiles.length} image(s)...`);
       toast({
         title: 'Uploading Images',
@@ -154,7 +154,7 @@ export default function NewListingPage() {
         const fileExtension = file.name.split('.').pop();
         const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExtension}`;
         const imageRef = ref(storage, `properties/${user.uid}/${cleanName}`);
-        
+
         console.log(`Starting upload for image ${idx + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
         return uploadBytes(imageRef, file)
           .then(snapshot => {
@@ -162,14 +162,14 @@ export default function NewListingPage() {
             return getDownloadURL(snapshot.ref);
           });
       });
-      
+
       // Give image uploads a generous 60 seconds timeout
       const imageUrls = await promiseTimeout(
         Promise.all(imagePromises),
         60000,
         'Image upload timed out. Your connection might be slow or the files too large. Please try again with smaller images.'
       );
-      
+
       console.log("All images uploaded successfully. URLs:", imageUrls);
 
       const newListingData = {
@@ -186,7 +186,7 @@ export default function NewListingPage() {
         period: 'yr',
         createdAt: serverTimestamp(),
       };
-      
+
       console.log("Saving property metadata to Firestore...", newListingData);
       toast({
         title: 'Saving Listing',
@@ -205,10 +205,10 @@ export default function NewListingPage() {
         title: 'Success!',
         description: 'Your property has been listed successfully.',
       });
-      
+
       router.push('/my-listings');
     } catch (error: any) {
-      console.warn("Listing Submission Error:", error); 
+      console.warn("Listing Submission Error:", error);
       toast({
         variant: 'destructive',
         title: 'Uh oh! Something went wrong.',
@@ -243,7 +243,7 @@ export default function NewListingPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form 
+            <form
               onSubmit={form.handleSubmit(
                 onSubmit,
                 (errors) => {
@@ -254,7 +254,7 @@ export default function NewListingPage() {
                     description: 'Please check that you have filled in all required fields and selected at least one image.',
                   });
                 }
-              )} 
+              )}
               className="space-y-8"
             >
               <div className="space-y-6">
@@ -271,7 +271,7 @@ export default function NewListingPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="images"
@@ -298,7 +298,7 @@ export default function NewListingPage() {
                       <div className="grid grid-cols-3 gap-4 mt-4">
                         {imagePreviews.map((src, index) => (
                           <div key={index} className="relative aspect-video rounded-lg overflow-hidden border shadow-sm group">
-                              <Image src={src} alt={`Preview ${index + 1}`} fill className="object-cover transition-transform group-hover:scale-110" />
+                            <Image src={src} alt={`Preview ${index + 1}`} fill className="object-cover transition-transform group-hover:scale-110" />
                           </div>
                         ))}
                       </div>
@@ -315,10 +315,10 @@ export default function NewListingPage() {
                       <FormItem>
                         <FormLabel className="text-lg font-bold">Location</FormLabel>
                         <FormControl>
-                          <LocationAutocomplete 
-                            value={field.value} 
-                            onChange={field.onChange} 
-                            placeholder="Select neighborhood..." 
+                          <LocationAutocomplete
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select neighborhood..."
                           />
                         </FormControl>
                         <FormMessage />
@@ -367,7 +367,7 @@ export default function NewListingPage() {
                 />
 
                 <div className="grid grid-cols-2 gap-6">
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="beds"
                     render={({ field }) => (
@@ -380,7 +380,7 @@ export default function NewListingPage() {
                       </FormItem>
                     )}
                   />
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="baths"
                     render={({ field }) => (
@@ -423,10 +423,10 @@ export default function NewListingPage() {
                                         return checked
                                           ? field.onChange([...field.value, item.id])
                                           : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== item.id
-                                              )
+                                            field.value?.filter(
+                                              (value) => value !== item.id
                                             )
+                                          )
                                       }}
                                     />
                                   </FormControl>
@@ -451,10 +451,10 @@ export default function NewListingPage() {
                     <FormItem>
                       <div className="flex items-center justify-between mb-1">
                         <FormLabel className="text-lg font-bold">Description</FormLabel>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
                           className="text-accent border-accent hover:bg-accent hover:text-white flex items-center gap-2"
                           onClick={handleAiGenerate}
                           disabled={isAiLoading}
@@ -464,10 +464,10 @@ export default function NewListingPage() {
                         </Button>
                       </div>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Describe the property or click 'Magic Write' to generate one..." 
+                        <Textarea
+                          placeholder="Describe the property or click 'Magic Write' to generate one..."
                           className="min-h-[150px] text-base"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />

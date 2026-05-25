@@ -64,12 +64,20 @@ service cloud.firestore {
 
     // 4. Rental Applications (Leads)
     match /applications/{applicationId} {
-      // Explicit read rule for individual documents and listings.
-      // For listings, the query MUST be filtered by landlordId or tenantId to pass this rule.
-      allow read: if isAdmin() || (isSignedIn() && (
+      // Allow fetching single applications if authorized
+      allow get: if isAdmin() || (isSignedIn() && (
         resource.data.tenantId == request.auth.uid || 
         resource.data.landlordId == request.auth.uid
       ));
+      
+      // Allow admins to list all applications
+      allow list: if isAdmin();
+      
+      // Allow tenants to list their own applications (must query using tenantId filter)
+      allow list: if isSignedIn() && resource.data.tenantId == request.auth.uid;
+      
+      // Allow landlords to list their own applications (must query using landlordId filter)
+      allow list: if isSignedIn() && resource.data.landlordId == request.auth.uid;
       
       allow create: if isSignedIn();
       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.landlordId);
